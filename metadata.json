@@ -1,0 +1,6 @@
+{
+  "name": "Luna & Mendes | Saúde, Diagnóstico e Reabilitação",
+  "description": "Clínica Multiprofissional de Saúde e Diagnóstico em Aurora-CE. Exames • Especialidades • Espaço Reabilitar.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
