@@ -2,6 +2,13 @@ import { useState, useEffect, useRef, FormEvent, useMemo } from 'react';
 import { useSanityData } from './hooks/useSanityData';
 import { WhatsAppFloatingButton } from './components/WhatsAppFloatingButton';
 import { ServiceCTAButton } from './components/ServiceCTAButton';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { LoginAdmin } from './components/LoginAdmin';
+import { DashboardAdmin } from './components/DashboardAdmin';
+import { PublicAgendar } from './components/PublicAgendar';
+import { ImageMapper } from './components/ImageMapper';
+import { ClinicLogo } from './components/ClinicLogo';
+
 import {
   Calendar,
   ArrowRight,
@@ -31,7 +38,8 @@ import {
   Star,
   Quote,
   Baby,
-  Users
+  Users,
+  Lock
 } from 'lucide-react';
 
 // Tipagem para os dados de agendamento fictício / integração
@@ -46,7 +54,7 @@ interface AppointmentData {
   checkup?: string;
 }
 
-export default function App() {
+export function LandingPage() {
   // Estados de controle de menus e modais de agendamento
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -54,6 +62,7 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [showAllDoctors, setShowAllDoctors] = useState(false);
+  const [dbMedicos, setDbMedicos] = useState<any[]>([]); // Médicos originários do PostgreSQL (Supabase)
   
   // Estado do agendador multi-etapas
   const [bookingStep, setBookingStep] = useState(1);
@@ -87,6 +96,26 @@ export default function App() {
       return () => clearTimeout(timer);
     }
   }, [rateLimited]);
+
+  // Carrega médicos dinâmicamente do banco PostgreSQL via API REST no mount
+  useEffect(() => {
+    let isMounted = true;
+    const loadMedicosFromDB = async () => {
+      try {
+        const response = await fetch('/api/medicos');
+        if (response.ok) {
+          const data = await response.json();
+          if (isMounted && Array.isArray(data)) {
+            setDbMedicos(data);
+          }
+        }
+      } catch (error) {
+        console.warn('PostgreSQL /api/medicos offline or unreachable on load. Using structured fallback.', error);
+      }
+    };
+    loadMedicosFromDB();
+    return () => { isMounted = false; };
+  }, []);
 
   // Função para reiniciar o timer de inatividade (5 minutos)
   const resetInactivityTimer = () => {
@@ -256,28 +285,191 @@ export default function App() {
       name: 'Dr. Henrique Feitosa',
       role: 'Médico Cardiologista',
       category: 'Medicina',
-      crm: 'CRM Ativo',
+      crm: 'CRM/CE 16.842',
       details: [
-        'Eletrocardiograma e Exames Cardíacos',
-        'Avaliação de Risco Cirúrgico',
-        'Tratamento de Hipertensão Arterial e Arritmias',
-        'Insuficiência Cardíaca e Valvopatias'
+        'Consultas Cardiológicas e Exames Preventivos (Eletrocardiograma)',
+        'Laudo de Risco Cirúrgico e Avaliação Cardiovascular Completa',
+        'Tratamento de Doenças Cardiovasculares, Arritmias e Hipertensão',
+        'Acompanhamento de Valvopatias e Insuficiência Cardíaca'
       ],
-      whatsappMsg: 'Gostaria de agendar uma consulta cardiológica com o Dr. Henrique Feitosa.'
+      whatsappMsg: 'Gostaria de agendar uma consulta cardiológica com o Dr. Henrique Feitosa.',
+      photoUrl: 'https://dzjjioioqbwiouusrkrb.supabase.co/storage/v1/object/public/fotos-clinica/WhatsApp%20Image%202026-06-01%20at%2022.45.41.jpeg'
+    },
+    {
+      id: 'dr-everton-silveira',
+      name: 'Dr. Éverton Silveira Macedo',
+      role: 'Médico Cirurgião Geral e Urologista',
+      category: 'Medicina',
+      crm: 'CRM/CE 17.085 | RQE 13.423',
+      details: [
+        'Tratamento de doenças da Próstata, Rins, Bexiga e Testículos',
+        'Cálculos Renais, Câncer Urológico, Fimose, Hidrocele e Varicocele',
+        'Vasectomia, Disfunção Erétil, Ejaculação Precoce e Infertilidade Masculina',
+        'Diagnóstico e Tratamento de ISTs e Realização de Biópsia de Próstata'
+      ],
+      whatsappMsg: 'Gostaria de agendar uma consulta urológica com o Dr. Éverton Silveira Macedo.',
+      photoUrl: 'https://dzjjioioqbwiouusrkrb.supabase.co/storage/v1/object/public/fotos-clinica/WhatsApp%20Image%202026-06-01%20at%2022.45.42%20(1).jpeg'
+    },
+    {
+      id: 'junior-soares',
+      name: 'Júnior Soares',
+      role: 'Enfermeiro Dermato-Estomaterapeuta',
+      category: 'Enfermagem',
+      crm: 'COREN Especializado',
+      details: [
+        'Dermatologia e Estomaterapia aplicada ao Tratamento de Feridas e Curativos',
+        'Habilitação Avançada em Laserterapia para Diferentes Patologias',
+        'Acompanhamento Técnico e Cuidados em Feridas Complexas'
+      ],
+      whatsappMsg: 'Gostaria de agendar atendimento com o enfermeiro especialista Júnior Soares.',
+      photoUrl: 'https://dzjjioioqbwiouusrkrb.supabase.co/storage/v1/object/public/fotos-clinica/WhatsApp%20Image%202026-06-01%20at%2022.45.42%20(2).jpeg'
+    },
+    {
+      id: 'ana-cecilia-benicio',
+      name: 'Ana Cecília Benício',
+      role: 'Enfermeira Estomaterapeuta & Laserterapeuta',
+      category: 'Enfermagem',
+      crm: 'COREN Estomaterapia',
+      details: [
+        'Tratamento Avançado de Feridas Crônicas (Adulto e Pediátrico)',
+        'Laser de Baixa Potência para diversas patologias e cicatrização',
+        'Acompanhamento pós-operatório, pós-parto e prevenção de fissura mamária',
+        'Manejo de ostomias e orientação para troca de bolsas'
+      ],
+      whatsappMsg: 'Gostaria de agendar atendimento estomaterápico/feridas com Ana Cecília.',
+      photoUrl: 'https://dzjjioioqbwiouusrkrb.supabase.co/storage/v1/object/public/fotos-clinica/WhatsApp%20Image%202026-06-01%20at%2022.45.42%20(3).jpeg'
     },
     {
       id: 'dra-myreia-petronio',
       name: 'Dra. Myreia Petronio',
       role: 'Médica Ginecologista e Obstetra',
       category: 'Medicina',
-      crm: 'CRM Ativa',
+      crm: 'CRM/CE 21.151',
       details: [
-        'Cirurgia Ginecológica Minimamente Invasiva',
-        'Inserção de DIU e Implanon',
-        'Colposcopia e Microscopia de Conteúdo Vaginal',
-        'Pré-Natal Completo e Obstetrícia'
+        'Atuação em Ginecologia Geral e Especialista em Cirurgia Ginecológica Minimamente Invasiva',
+        'Inserção segura de DIU e Implanon sob Técnica Guiada',
+        'Realização de Colposcopia e Microscopia de Conteúdo Vaginal',
+        'Pré-Natal Completo, Puericultura e Obstetrícia'
       ],
-      whatsappMsg: 'Gostaria de agendar uma consulta ginecológica com a Dra. Myreia Petronio.'
+      whatsappMsg: 'Gostaria de agendar uma consulta ginecológica com a Dra. Myreia Petronio.',
+      photoUrl: 'https://dzjjioioqbwiouusrkrb.supabase.co/storage/v1/object/public/fotos-clinica/WhatsApp%20Image%202026-06-01%20at%2022.45.42%20(4).jpeg'
+    },
+    {
+      id: 'dra-tamyllys-tavares',
+      name: 'Dra. Tamyllys Tavares',
+      role: 'Médica Psiquiatra de Adultos, Crianças e Adolescentes',
+      category: 'Medicina',
+      crm: 'CRM/PB 12.817',
+      details: [
+        'Pós-graduada em Psiquiatria Geral',
+        'Pós-graduando em Psiquiatria da Infância e Adolescência — Albert Einstein (SP)',
+        'Tratamento de Transtornos de Humor, Conduta e Autismo no Desenvolvimento',
+        'Suporte em Saúde Mental Integrada para Adultos e Crianças'
+      ],
+      whatsappMsg: 'Gostaria de agendar consulta em Psiquiatria com a Dra. Tamyllys Tavares.',
+      photoUrl: 'https://dzjjioioqbwiouusrkrb.supabase.co/storage/v1/object/public/fotos-clinica/WhatsApp%20Image%202026-06-01%20at%2022.45.42.jpeg'
+    },
+    {
+      id: 'josiclea-cassiano',
+      name: 'Josiclea Cassiano',
+      role: 'Fonoaudióloga Especialista em Audiologia',
+      category: 'Reabilitação',
+      crm: 'CRFa Ativo',
+      details: [
+        'Especialista em Audiologia e Analista do Comportamento Aplicado (ABA)',
+        'Pós-graduanda em Autismo e Fonoaudiologia do Trabalho',
+        'Capacitação em Laserterapia, Tratamento de Disfagia e Alterações de Linguagem',
+        'Realização do Teste da Orelhinha (Triagem Nacional) e do Teste da Linguinha'
+      ],
+      whatsappMsg: 'Gostaria de agendar fonoaudiologia com Josiclea Cassiano.',
+      photoUrl: 'https://dzjjioioqbwiouusrkrb.supabase.co/storage/v1/object/public/fotos-clinica/WhatsApp%20Image%202026-06-01%20at%2022.45.43%20(1).jpeg'
+    },
+    {
+      id: 'dra-renata-aquino',
+      name: 'Dra. Renata Aquino',
+      role: 'Médica Dermatologista',
+      category: 'Medicina',
+      crm: 'CRM/CE 24.315',
+      details: [
+        'Biópsia de Câncer de Pele e Retirada de Sinais, Lipomas e Cistos',
+        'Procedimentos Estéticos: Lobuloplastia, Blefaroplastia e Correção de Lóbulo de Orelha',
+        'Tratamento clínico de Doenças de Pele, Acne, Queloides e Manchas',
+        'Tratamento de Queda de Cabelo e Terapia Capilar Avançada'
+      ],
+      whatsappMsg: 'Gostaria de agendar consulta com a dermatologista Dra. Renata Aquino.',
+      photoUrl: 'https://dzjjioioqbwiouusrkrb.supabase.co/storage/v1/object/public/fotos-clinica/WhatsApp%20Image%202026-06-01%20at%2022.45.43%20(2).jpeg'
+    },
+    {
+      id: 'jamile-santos',
+      name: 'Jamile Santos',
+      role: 'Enfermeira de Rastreamento Preventivo',
+      category: 'Enfermagem',
+      crm: 'COREN Rastreio',
+      details: [
+        'Realização de Exame Citopatológico Preventivo Ginecológico',
+        'Atendimento Humanizado, focado no conforto físico e emocional',
+        'Orientações sobre autocuidado, imunização e prevenção de saúde'
+      ],
+      whatsappMsg: 'Gostaria de agendar preventivo com a Enfermeira Jamile Santos.',
+      photoUrl: 'https://dzjjioioqbwiouusrkrb.supabase.co/storage/v1/object/public/fotos-clinica/WhatsApp%20Image%202026-06-01%20at%2022.45.43%20(3).jpeg'
+    },
+    {
+      id: 'dr-cicero-hedilberto',
+      name: 'Dr. Cícero Hedilberto',
+      role: 'Gastroenterologista, Endoscopista e Cirurgião Geral',
+      category: 'Medicina',
+      crm: 'CRM 10.466 | RQE 12.361',
+      details: [
+        'Consultas especializadas em Gastroenterologia e vias gástricas',
+        'Exames de Endoscopia Digestiva Alta de Alta Definição',
+        'Avaliação cirúrgica geral e procedimentos eletivos'
+      ],
+      whatsappMsg: 'Gostaria de agendar consulta com o Dr. Cícero Hedilberto.',
+      photoUrl: 'https://dzjjioioqbwiouusrkrb.supabase.co/storage/v1/object/public/fotos-clinica/WhatsApp%20Image%202026-06-01%20at%2022.45.43%20(4).jpeg'
+    },
+    {
+      id: 'dr-guilherme-porto-neuropediatria',
+      name: 'Dr. Guilherme Porto (Neuropediatria)',
+      role: 'Médico Neuropediatra e Neurologista',
+      category: 'Medicina',
+      crm: 'CRM/PB 18.454',
+      details: [
+        'Consultas de Neuropediatria e Neurologia Clínica',
+        'Tratamento de Distúrbios de Desenvolvimento e Aprendizado na Infância',
+        'Abordagem clínica em patologias neurológicas e controle de crises convulsivas'
+      ],
+      whatsappMsg: 'Gostaria de agendar consulta de Neuropediatria com o Dr. Guilherme Porto.',
+      photoUrl: 'https://dzjjioioqbwiouusrkrb.supabase.co/storage/v1/object/public/fotos-clinica/WhatsApp%20Image%202026-06-01%20at%2022.45.43.jpeg'
+    },
+    {
+      id: 'dr-henrile-ferreira-nutrologia',
+      name: 'Dr. Henrile Ferreira (Nutrologia)',
+      role: 'Endoscopista Digestiva Alta e Nutrologia',
+      category: 'Medicina',
+      crm: 'CRM/CE 22.213',
+      details: [
+        'Atendimento focado em Emagrecimento Saudável e Longevidade',
+        'Reposição Hormonal Orientada e Medicine do Estilo de Vida',
+        'Terapia Injetável Médica Nutrológica e Restauração Metabólica',
+        'Nutrologia voltada para longevidade ativa e bem-estar integral'
+      ],
+      whatsappMsg: 'Gostaria de agendar consulta de Nutrologia com o Dr. Henrile Ferreira.',
+      photoUrl: 'https://dzjjioioqbwiouusrkrb.supabase.co/storage/v1/object/public/fotos-clinica/WhatsApp%20Image%202026-06-01%20at%2022.45.44%20(1).jpeg'
+    },
+    {
+      id: 'samara-joice',
+      name: 'Samara Joice',
+      role: 'Nutricionista Materno Infantil',
+      category: 'Reabilitação',
+      crm: 'CRN: 49.545',
+      details: [
+        'Especialista em Nutrição Materno Infantil e Pós-graduanda na área',
+        'Introdução Alimentar, Capacitação em ABA e Autismo',
+        'Tratamento e Terapia Alimentar para Seletividade Alimentar e Dificuldades de Mastigação',
+        'Acompanhamento preventivo e tratamento de Obesidade Infantil'
+      ],
+      whatsappMsg: 'Gostaria de agendar consulta com a Nutricionista Infantil Samara Joice.',
+      photoUrl: 'https://dzjjioioqbwiouusrkrb.supabase.co/storage/v1/object/public/fotos-clinica/WhatsApp%20Image%202026-06-01%20at%2022.45.44%20(2).jpeg'
     },
     {
       id: 'marcia-duarte',
@@ -286,54 +478,101 @@ export default function App() {
       category: 'Reabilitação',
       crm: 'CRFa Ativo',
       details: [
-        'Analista do Comportamento Aplicado (ABA) no Autismo (TEA)',
-        'Avaliação e Intervenção em TEA e TDAH',
-        'Manejo de Distúrbios de Linguagem e Comunicação',
+        'Analista do Comportamento Aplicada (ABA) no Autismo (TEA)',
+        'Avaliação e Intervenção focada em TEA e TDAH',
+        'Manejo de Distúrbios e Atrasos de Linguagem e Transtornos de Comunicação',
         'Realização do Teste da Linguinha'
       ],
-      whatsappMsg: 'Gostaria de marcar terapia de fonoaudiologia com Márcia Duarte no Espaço Reabilitar.'
+      whatsappMsg: 'Gostaria de marcar terapia de fonoaudiologia com Márcia Duarte.',
+      photoUrl: 'https://dzjjioioqbwiouusrkrb.supabase.co/storage/v1/object/public/fotos-clinica/WhatsApp%20Image%202026-06-01%20at%2022.45.44%20(3).jpeg'
     },
     {
-      id: 'dra-tamyllys-tavares',
-      name: 'Dra. Tamyllys Tavares',
-      role: 'Médica Psiquiatra de Adultos, Crianças e Adolescentes',
-      category: 'Medicina',
-      crm: 'CRM/PB 12.017',
+      id: 'paula-jamilly',
+      name: 'Paula Jamilly',
+      role: 'Enfermeira Especializada em Saúde da Mulher',
+      category: 'Enfermagem',
+      crm: 'COREN Ativo',
       details: [
-        'Pós-graduanda em Psiquiatria da Infância e Adolescência pelo Albert Einstein',
-        'Tratamento de Transtornos de Humor e de Conduta',
-        'Psiquiatria da Infância e Autismo',
-        'Suporte Clínico em Saúde Mental Integrada'
+        'Consultas Privadas de Enfermagem e Orientação de Métodos Contraceptivos',
+        'Coleta de Citologia Oncótica (Preventivo) de Colo de Útero',
+        'Esp. em Suplementação Baseada em Evidências e Terapia Injetável',
+        'Acompanhamento Pré-Natal Acolhedor e Cuidados de Puericultura'
       ],
-      whatsappMsg: 'Gostaria de agendar consulta em Psiquiatria com a Dra. Tamyllys Tavares.'
+      whatsappMsg: 'Gostaria de agendar consulta de enfermagem com Paula Jamilly.',
+      photoUrl: 'https://dzjjioioqbwiouusrkrb.supabase.co/storage/v1/object/public/fotos-clinica/WhatsApp%20Image%202026-06-01%20at%2022.45.44.jpeg'
     },
     {
-      id: 'dr-everton-silveira',
-      name: 'Dr. Éverton Silveira Macedo',
-      role: 'Médico Cirurgião Geral e Urologista',
+      id: 'dr-guilherme-porto-neuropsiquiatria',
+      name: 'Dr. Guilherme Porto (Neuropsiquiatria)',
+      role: 'Médico Neuropsiquiatra',
       category: 'Medicina',
-      crm: 'CRM/PB 12.883 | CRM/RN 12.451',
+      crm: 'CRM/PB 18.454 | CRM/RN 13.923',
       details: [
-        'Tratamento de doenças da Próstata, Rins, Bexiga e Testículos',
-        'Cirurgias de Fimose, Hidrocele, Varicocele e Vasectomia',
-        'Tratamento de Cálculos Renais e Câncer Urológico',
-        'Biópsia de Próstata e disfunção erétil'
+        'Avaliação de Transtornos Globais de Desenvolvimento (TEA, TDAH, TOD, TOC)',
+        'Tratamento de Depressão, Ansiedade, Transtornos Alimentares e Síndrome de Burnout',
+        'Abordagem clínica em Parkinson, Cefaleias Crônicas e Transtorno do Sono',
+        'Atendimento direcionado à reabilitação clínica integrada no Espaço Reabilitar'
       ],
-      whatsappMsg: 'Gostaria de agendar uma consulta urológica com o Dr. Éverton Silveira.'
+      whatsappMsg: 'Gostaria de agendar consulta em Neuropsiquiatria com o Dr. Guilherme Porto.',
+      photoUrl: 'https://dzjjioioqbwiouusrkrb.supabase.co/storage/v1/object/public/fotos-clinica/WhatsApp%20Image%202026-06-01%20at%2022.47.47%20(1).jpeg'
     },
     {
-      id: 'dra-renata-aquino',
-      name: 'Dra. Renata Aquino',
-      role: 'Médica Dermatologista',
+      id: 'dr-henrile-ferreira-endoscopia',
+      name: 'Dr. Henrile Ferreira (Endoscopia)',
+      role: 'Endoscopia Digestiva Alta',
       category: 'Medicina',
-      crm: 'CRM/CE 28.318',
+      crm: 'CRM/CE 22.213',
       details: [
-        'Biópsia de Câncer de Pele e Retirada de Sinais, Lipomas e Cistos',
-        'Procedimentos: Lobuloplastia e Blefaroplastia Cirúrgica',
-        'Tratamento de Manchas, Melasmas, Acne e Queloide',
-        'Terapia Capilar Avançada e Queda de Cabelo'
+        'Realização de Endoscopia Digestiva Alta de Alta Definição e Biópsias Gástricas',
+        'Tratamento do Refluxo Gastroesofágico, Esofagites, Úlceras e Dispepsia Funcional',
+        'Diagnóstico e Pesquisa Avançada de Helicobacter pylori e Lesões do Trato Gástrico',
+        'Orientações nutricionais integradas no manejo de diarreias agudas e crônicas'
       ],
-      whatsappMsg: 'Gostaria de agendar consulta com a dermatologista Dra. Renata Aquino.'
+      whatsappMsg: 'Gostaria de agendar exame de Endoscopia com o Dr. Henrile Ferreira.',
+      photoUrl: 'https://dzjjioioqbwiouusrkrb.supabase.co/storage/v1/object/public/fotos-clinica/WhatsApp%20Image%202026-06-01%20at%2022.47.47%20(2).jpeg'
+    },
+    {
+      id: 'dr-francisco-rosario',
+      name: 'Dr. Francisco Rosário',
+      role: 'Médico do Trabalho & Saúde Ocupacional',
+      category: 'Medicina',
+      crm: 'CRM Ativo',
+      details: [
+        'Consultas de Medicina do Trabalho e Exames Admissionais, Periódicos e Demissionais',
+        'Emissão de Atestado de Saúde Ocupacional (ASO) regulamentar',
+        'Exames preventivos de retorno ao trabalho e acompanhamento de saúde do trabalhador'
+      ],
+      whatsappMsg: 'Gostaria de agendar exames de Medicina do Trabalho com o Dr. Francisco Rosário.',
+      photoUrl: 'https://dzjjioioqbwiouusrkrb.supabase.co/storage/v1/object/public/fotos-clinica/WhatsApp%20Image%202026-06-01%20at%2022.47.47.jpeg'
+    },
+    {
+      id: 'dr-pblo-rolim',
+      name: 'Dr. Pablo Rolim',
+      role: 'Ultrassonografia e Consultas Gástricas',
+      category: 'Medicina',
+      crm: 'CRM Ativo',
+      details: [
+        'Ultrassonografias convencionais e com Doppler coloridos',
+        'Ultrassonografia Morfológica 1º, 2º Trimestre e 3D/4D',
+        'Realização de Biópsias guiadas por USG',
+        'Consultas especializadas na abordagem de patologias gástricas'
+      ],
+      whatsappMsg: 'Gostaria de agendar ultrassom ou consulta com o Dr. Pablo Rolim.',
+      photoUrl: 'https://dzjjioioqbwiouusrkrb.supabase.co/storage/v1/object/public/fotos-clinica/WhatsApp%20Image%202026-06-01%20at%2022.47.48%20(1).jpeg'
+    },
+    {
+      id: 'dr-fernando-filho',
+      name: 'Dr. Fernando Filho',
+      role: 'Médico Ultrassonografista',
+      category: 'Medicina',
+      crm: 'CRM/PB 13.889 | CRM/RN 12.481',
+      details: [
+        'Atendimento em Ultrassonografia de Tecidos e Abdômen',
+        'Doppler Arterial e Venoso de Alta Precisão',
+        'Acompanhamento e Laudos Ágeis e Confiáveis para Clínicos'
+      ],
+      whatsappMsg: 'Gostaria de agendar exame de ultrassonografia com o Dr. Fernando Filho.',
+      photoUrl: 'https://dzjjioioqbwiouusrkrb.supabase.co/storage/v1/object/public/fotos-clinica/WhatsApp%20Image%202026-06-01%20at%2022.47.48.jpeg'
     },
     {
       id: 'samara-saraiva',
@@ -347,7 +586,8 @@ export default function App() {
         'Avaliação e Atendimento Psicopedagógico Infantil',
         'Tratamento para Transtornos Globais do Desenvolvimento'
       ],
-      whatsappMsg: 'Gostaria de agendar terapia psicológica com Samara Saraiva.'
+      whatsappMsg: 'Gostaria de agendar terapia psicológica com Samara Saraiva.',
+      photoUrl: ''
     },
     {
       id: 'mara-alves',
@@ -361,7 +601,8 @@ export default function App() {
         'Intervenção Psicomotora e Terapeuta ABA dedicada',
         'Terapia Ocupacional em curso para desenvolvimento funcional'
       ],
-      whatsappMsg: 'Gostaria de agendar fisioterapia/terapia ocupacional com Mara Alves.'
+      whatsappMsg: 'Gostaria de agendar fisioterapia/terapia ocupacional com Mara Alves.',
+      photoUrl: ''
     },
     {
       id: 'socorro-maria',
@@ -375,7 +616,8 @@ export default function App() {
         'Tratamento focado em Transtornos de Aprendizagem, TDAH e TOD',
         'Apoio à inclusão escolar e desenvolvimento adaptado'
       ],
-      whatsappMsg: 'Gostaria de marcar avaliação psicopedagógica com Socorro Maria.'
+      whatsappMsg: 'Gostaria de marcar avaliação psicopedagógica com Socorro Maria.',
+      photoUrl: ''
     },
     {
       id: 'thayna-fernandes',
@@ -389,49 +631,8 @@ export default function App() {
         'Psicoterapia de Apoio em Crises de Período de Transição de Carreira',
         'Atendimento focado, acolhedor e integrativo'
       ],
-      whatsappMsg: 'Gostaria de agendar consulta psicológica com Thayná Fernandes.'
-    },
-    {
-      id: 'ana-cecilia-benicio',
-      name: 'Ana Cecília Benício',
-      role: 'Enfermeira Estomaterapeuta & Laserterapeuta',
-      category: 'Enfermagem',
-      crm: 'COREN Estomaterapia',
-      details: [
-        'Tratamento Avançado de Feridas e Curativos Complexos (Adulto/Pediátrico)',
-        'Laserterapia aplicada para cicatrização acelerada e alívio de dor',
-        'Manejo de Ostomias e Troca Sistemática de Bolsas de Estomia',
-        'Tratamento e Prevenção de Fissura Mamária no Pós-parto'
-      ],
-      whatsappMsg: 'Gostaria de agendar atendimento estomaterápico/feridas com Ana Cecília.'
-    },
-    {
-      id: 'dr-pblo-rolim',
-      name: 'Dr. Pablo Rolim',
-      role: 'Médico de Diagnósticos por Imagem e Gastroenterologia',
-      category: 'Medicina',
-      crm: 'CRM Ativo',
-      details: [
-        'Ultrassonografias Convencionais e com Doppler Colorido',
-        'Ultrassonografia Morfológica de 1º e 2º Trimestres',
-        'Realização de Endoscopia Digestiva Alta e Colonoscopia',
-        'Biópsias Dirigidas e Consultas Clínicas Gástricas'
-      ],
-      whatsappMsg: 'Gostaria de agendar ultrassom ou exame com o Dr. Pablo Rolim.'
-    },
-    {
-      id: 'dr-henrile-ferreira',
-      name: 'Dr. Henrile Ferreira',
-      role: 'Nutrólogo Clínico e Saúde Integrativa',
-      category: 'Medicina',
-      crm: 'CRM/CE 22.216',
-      details: [
-        'Atendimento focado em Emagrecimento Saudável e Longevidade',
-        'Terapia Injetável Médica Nutrológica e Restauração Metabólica',
-        'Medicina do Estilo de Vida e Suplementação customizada',
-        'Equilíbrio e Reposição Hormonal Orientada'
-      ],
-      whatsappMsg: 'Gostaria de marcar consulta de Nutrologia com o Dr. Henrile Ferreira.'
+      whatsappMsg: 'Gostaria de agendar consulta psicológica com Thayná Fernandes.',
+      photoUrl: ''
     },
     {
       id: 'vitoria-duarte',
@@ -445,73 +646,8 @@ export default function App() {
         'Nutrição voltada para gestação, infância, fase escolar e longevidade',
         'Modulação de Hábitos Saudáveis e Rotina Equilibrada'
       ],
-      whatsappMsg: 'Gostaria de agendar consulta com a Nutricionista Vitória Duarte.'
-    },
-    {
-      id: 'dr-fernando-filho',
-      name: 'Dr. Fernando Filho',
-      role: 'Médico Ultrassonografista',
-      category: 'Medicina',
-      crm: 'CRM de Diagnóstico',
-      details: [
-        'Ultrassonografia de Tecidos, Glândulas, Mamas e Abdômen',
-        'Doppler Arterial e Venoso de Alta Precisão',
-        'Acompanhamento e Laudos Ágeis e Confiáveis para Clínicos'
-      ],
-      whatsappMsg: 'Gostaria de agendar exame de ultrassonografia com o Dr. Fernando Filho.'
-    },
-    {
-      id: 'junior-soares',
-      name: 'Júnior Soares',
-      role: 'Enfermeiro Dermato-Estomaterapeuta',
-      category: 'Enfermagem',
-      crm: 'COREN Especializado',
-      details: [
-        'Tratamento Dermato-Estomaterápico Integrado em Lesões',
-        'Aplicação de Laserterapia em Feridas Agudas e Crônicas',
-        'Habilitação Avançada em Curativos de Alta Complexidade'
-      ],
-      whatsappMsg: 'Gostaria de agendar atendimento com o enfermeiro especialista Júnior Soares.'
-    },
-    {
-      id: 'paula-jamilly',
-      name: 'Paula Jamilly',
-      role: 'Enfermeira Especializada em Saúde da Mulher',
-      category: 'Enfermagem',
-      crm: 'COREN Ativo',
-      details: [
-        'Consultas Privadas de Enfermagem e Orientação de Métodos Contraceptivos',
-        'Coleta de Citologia Oncótica (Preventivo)',
-        'Esp. em Suplementação Baseada em Evidências e Terapia Injetável',
-        'Acompanhamento Pré-Natal Acolhedor e Cuidados de Puericultura'
-      ],
-      whatsappMsg: 'Gostaria de agendar consulta de enfermagem com Paula Jamilly.'
-    },
-    {
-      id: 'jamile-santos',
-      name: 'Jamile Santos',
-      role: 'Enfermeira de Rastreamento Preventivo',
-      category: 'Enfermagem',
-      crm: 'COREN Rastreio',
-      details: [
-        'Realização do Exame Citopatológico Preventivo Ginecológico',
-        'Atendimento Humanizado, focado no conforto físico e emocional',
-        'Orientações sobre autocuidado, imunização e prevenção global'
-      ],
-      whatsappMsg: 'Gostaria de agendar preventivo com a Enfermeira Jamile Santos.'
-    },
-    {
-      id: 'dr-francisco-rosario',
-      name: 'Dr. Francisco Rosário',
-      role: 'Médico do Trabalho & Saúde Ocupacional',
-      category: 'Medicina',
-      crm: 'CRM Ativo',
-      details: [
-        'Consultas de Medicina do Trabalho e Admissional/Demissional',
-        'Atestado de Saúde Ocupacional (ASO) regulamentar',
-        'Exames periódicos de retornos ao trabalho'
-      ],
-      whatsappMsg: 'Gostaria de agendar exames de Medicina do Trabalho com o Dr. Francisco Rosário.'
+      whatsappMsg: 'Gostaria de agendar consulta com a Nutricionista Vitória Duarte.',
+      photoUrl: ''
     }
   ];
 
@@ -522,14 +658,42 @@ export default function App() {
   const centralWhatsApp = sanityConfig?.whatsapp || '5588996248427';
   const centralWhatsAppDisplay = sanityConfig?.whatsappDisplay || '(88) 99624-8427';
   const centralEmail = sanityConfig?.email || 'contato@lunaemendes.com.br';
-  const centralAddress = sanityConfig?.address || 'Avenida Antônio Ricardo, SN, Centro (Próximo à Praça da Matriz), Aurora - Ceará, CEP 63360-000';
+  const centralAddress = sanityConfig?.address || 'Av. Antônio Ricardo, 29, Centro, Aurora - CE, 63360-000';
   const centralOpeningHours = sanityConfig?.openingHours || 'Segunda a Sexta: 07h às 18h | Sábado: 07h às 12h';
   const centralInstagram = sanityConfig?.instagramUrl || 'https://instagram.com/lunaemendes';
 
-  // Se o Sanity retornar médicos válidos do painel administrativo, usamos, do contrário mantemos com segurança os locais em estado imutável
+  // Consolidação dinâmica do Corpo Técnico (Prisma/PostgreSQL prioritário + Fallbacks do Sanity/Local)
   const finalDoctors = useMemo(() => {
-    return sanityDoctors.length > 0 ? sanityDoctors : doctors;
-  }, [sanityDoctors]);
+    // Lista base de médicos (Sanity se houver, senão local)
+    const baseList = sanityDoctors.length > 0 ? sanityDoctors : doctors;
+
+    // Se houver registros populados no banco PostgreSQL (Supabase) via API /api/medicos
+    if (dbMedicos && dbMedicos.length > 0) {
+      return dbMedicos.map((dbMed: any) => {
+        // Tenta associar com nosso banco de especialistas local pelo nome do médico
+        const localMatch = baseList.find(
+          (loc) => loc.name.toLowerCase().trim() === dbMed.nome.toLowerCase().trim()
+        );
+
+        return {
+          id: `db-${dbMed.id}`,
+          name: dbMed.nome,
+          role: dbMed.especialidade,
+          category: localMatch?.category || 'Medicina',
+          crm: localMatch?.crm || 'CRM Ativo',
+          photoUrl: (dbMed.foto_url && !dbMed.foto_url.startsWith('COLE_AQUI_')) ? dbMed.foto_url : (localMatch?.photoUrl || ''), // Ignora os placeholders de seed e usa recurso estático ou vazio
+          details: localMatch?.details || [
+            'Atendimento integral e personalizado',
+            'Acompanhamento e suporte continuado',
+            'Excelência técnica orientada à saúde'
+          ],
+          whatsappMsg: localMatch?.whatsappMsg || `Olá, gostaria de agendar uma consulta com ${dbMed.nome}.`
+        };
+      });
+    }
+
+    return baseList;
+  }, [sanityDoctors, dbMedicos]);
 
   // SANITIZAÇÃO DE ENTRADA, PREVENÇÃO DE XSS E INJEÇÃO (ETAPA 2)
   // Remove marcas de tags HTML/XML ou injeção de scripts maliciosos e limita caracteres
@@ -711,46 +875,62 @@ export default function App() {
       )}
 
       {/* 1. TOPO DA PÁGINA / BARRA DE NAVEGAÇÃO PREMIUM (Estilo Luna & Mendes) */}
-      <header className="sticky top-0 z-40 bg-[#0A2B2A]/95 backdrop-blur-md border-b border-[#C5A880]/30 text-white shadow-md">
+      <header className="sticky top-0 z-40 bg-[#0A2B2A] border-b border-[#C5A880]/30 text-white shadow-lg backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20" id="navbar-container">
+          <div className="flex items-center justify-between h-20 gap-4" id="navbar-container">
             
             {/* Logo da Clínica */}
-            <a href="#clinic-root" className="flex items-center space-x-3 group" id="logo-brand">
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-[#C5A880] to-[#E3C9A6] flex items-center justify-center text-[#0A2B2A] font-extrabold shadow-md transform group-hover:scale-105 transition-transform">
-                <span className="font-serif text-xl tracking-tight">LM</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="font-serif text-lg font-bold tracking-wider text-[#C5A880] group-hover:text-white transition-colors">
+            <a href="#clinic-root" className="flex items-center space-x-3 group shrink-0" id="logo-brand">
+              <ClinicLogo size={46} variant="gold-teal" className="transform group-hover:scale-105 transition-transform" />
+              <div className="flex flex-col justify-center leading-none">
+                <span className="font-serif text-base sm:text-lg font-bold tracking-wider text-[#C5A880] group-hover:text-white transition-colors whitespace-nowrap">
                   LUNA & MENDES
                 </span>
-                <span className="text-[9px] uppercase tracking-widest text-[#E3C9A6] font-medium leading-none">
+                <span className="text-[8px] sm:text-[9.5px] uppercase tracking-widest text-[#E3C9A6] font-semibold whitespace-nowrap mt-1 opacity-90">
                   Saúde • Diagnóstico • Reabilitação
                 </span>
               </div>
             </a>
 
             {/* Menu Desktop */}
-            <nav className="hidden lg:flex items-center space-x-8 text-xs font-semibold uppercase tracking-wider" id="desktop-nav">
-              <a href="#exames" className="hover:text-[#C5A880] transition-colors">Check-ups</a>
-              <a href="#especialistas" className="hover:text-[#C5A880] transition-colors">Corpo Técnico</a>
-              <a href="#espaco-reabilitar" className="hover:text-[#C5A880] transition-colors">Espaço Reabilitar</a>
-              <a href="#sobre" className="hover:text-[#C5A880] transition-colors">Nossa Clínica</a>
-              <a href="#localizacao" className="hover:text-[#C5A880] transition-colors">Localização</a>
+            <nav className="hidden lg:flex items-center gap-x-5 xl:gap-x-7 text-[11px] xl:text-xs font-semibold uppercase tracking-widest" id="desktop-nav">
+              <a href="#exames" className="text-white/80 hover:text-[#C5A880] transition-colors whitespace-nowrap relative py-2 group">
+                Check-ups
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#C5A880] group-hover:w-full transition-all duration-300"></span>
+              </a>
+              <a href="#especialistas" className="text-white/80 hover:text-[#C5A880] transition-colors whitespace-nowrap relative py-2 group">
+                Corpo Técnico
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#C5A880] group-hover:w-full transition-all duration-300"></span>
+              </a>
+              <a href="#espaco-reabilitar" className="text-white/80 hover:text-[#C5A880] transition-colors whitespace-nowrap relative py-2 group">
+                Espaço Reabilitar
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#C5A880] group-hover:w-full transition-all duration-300"></span>
+              </a>
+              <a href="#sobre" className="text-white/80 hover:text-[#C5A880] transition-colors whitespace-nowrap relative py-2 group">
+                Nossa Clínica
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#C5A880] group-hover:w-full transition-all duration-300"></span>
+              </a>
+              <a href="#localizacao" className="text-white/80 hover:text-[#C5A880] transition-colors whitespace-nowrap relative py-2 group">
+                Localização
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#C5A880] group-hover:w-full transition-all duration-300"></span>
+              </a>
             </nav>
 
             {/* Botão de Agendamento Rápido no Header */}
-            <div className="hidden lg:flex items-center space-x-4">
-              <span className="text-white/60 text-xs flex items-center">
-                <Phone className="w-3.5 h-3.5 mr-1 text-[#C5A880]" />
-                (88) 99624-8427
-              </span>
-              <button 
-                onClick={() => { setBookingStep(1); setIsBookingModalOpen(true); }}
-                className="bg-gradient-to-r from-[#C5A880] to-[#E3C9A6] text-[#0A2B2A] px-5 py-2.5 rounded-full text-xs font-extrabold shadow-md hover:shadow-lg hover:brightness-105 transition-all text-center"
+            <div className="hidden lg:flex items-center gap-x-4 xl:gap-x-6 shrink-0">
+              <Link 
+                to="/admin/login"
+                className="text-white/70 hover:text-[#C5A880] text-[11px] xl:text-xs font-bold tracking-widest uppercase transition-colors flex items-center whitespace-nowrap gap-1.5 py-2 group"
+              >
+                <Lock className="w-3.5 h-3.5 text-[#C5A880] shrink-0 group-hover:scale-110 transition-transform" />
+                Painel Admin
+              </Link>
+              <Link 
+                to="/agendar"
+                className="bg-gradient-to-r from-[#C5A880] to-[#E3C9A6] text-[#0A2B2A] px-5 py-2.5 rounded-full text-[11px] xl:text-xs font-black shadow-md hover:shadow-lg hover:scale-[1.03] active:scale-95 transition-all text-center whitespace-nowrap"
               >
                 Agendamento Online
-              </button>
+              </Link>
             </div>
 
             {/* Hamburguer Mobile */}
@@ -774,6 +954,11 @@ export default function App() {
               <a href="#espaco-reabilitar" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#C5A880] py-1 border-b border-white/5">Espaço Reabilitar (ABA)</a>
               <a href="#sobre" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#C5A880] py-1 border-b border-white/5">Estrutura</a>
               <a href="#localizacao" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#C5A880] py-1">Localização e Contato</a>
+              <Link to="/agendar" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#C5A880] py-1 text-emerald-400 font-bold border-b border-white/5 pb-2">Agendar Consulta</Link>
+              <Link to="/admin/login" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#C5A880] text-amber-500 font-bold py-1 flex items-center">
+                <Lock className="w-3.5 h-3.5 mr-2 text-amber-500" />
+                Painel Admin
+              </Link>
             </div>
             <div className="pt-4 flex flex-col space-y-3">
               <a 
@@ -784,12 +969,13 @@ export default function App() {
               >
                 Atendimento WhatsApp
               </a>
-              <button 
-                onClick={() => { setIsMobileMenuOpen(false); setIsBookingModalOpen(true); }}
+              <Link 
+                to="/agendar"
+                onClick={() => setIsMobileMenuOpen(false)}
                 className="w-full bg-[#C5A880] text-[#0A2B2A] text-center py-2.5 rounded-xl text-xs font-extrabold"
               >
                 Agendamento Rápido
-              </button>
+              </Link>
             </div>
           </div>
         )}
@@ -1535,18 +1721,46 @@ export default function App() {
                 className="group bg-slate-50 rounded-3xl overflow-hidden border border-slate-200/40 hover:border-[#C5A880]/40 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
                 id={`card-staff-${doc.id}`}
               >
-                {/* Imagem do Especialista do Sanity se cadastrada */}
-                {doc.photoUrl && (
-                  <div className="w-full h-60 overflow-hidden relative border-b border-slate-200/40 bg-slate-100 shrink-0">
-                    <img 
-                      src={doc.photoUrl} 
-                      alt={doc.name} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/25 to-transparent pointer-events-none" />
+                {/* ETAPA 1 & 3: Tratamento Visual Unificado (Estilo Apple / Linear) */}
+                <div className="w-full aspect-[4/5] overflow-hidden relative bg-neutral-100 border-b border-slate-200/30 shrink-0">
+                  {doc.photoUrl ? (
+                    <>
+                      <img 
+                        src={doc.photoUrl} 
+                        alt={doc.name} 
+                        className="w-full h-full object-cover object-top filter contrast-[1.03] brightness-[1.01] saturate-[0.92] sepia-[0.04] group-hover:scale-105 transition-transform duration-700 ease-out" 
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const imgEl = e.currentTarget as HTMLImageElement;
+                          imgEl.style.display = 'none';
+                          // Exibe o fallback caso o link do Supabase esteja vazio ou quebrado
+                          const fallbackEl = imgEl.parentElement?.querySelector('.img-fallback-placeholder');
+                          if (fallbackEl) {
+                            fallbackEl.classList.remove('hidden');
+                          }
+                        }}
+                      />
+                      {/* Vinheta de fusão e tom de estúdio uniforme */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0A2B2A]/40 via-transparent to-transparent pointer-events-none" />
+                      <div className="absolute inset-0 bg-[#C5A880]/5 mix-blend-color pointer-events-none pb-[1px]" />
+                    </>
+                  ) : null}
+
+                  {/* Fallback de Direção de Arte de Alto Padrão */}
+                  <div className={`img-fallback-placeholder absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#0A2B2A] to-[#061C1B] text-white p-6 text-center select-none ${doc.photoUrl ? 'hidden' : ''}`}>
+                    <div className="w-14 h-14 rounded-full bg-[#C5A880]/15 border border-[#C5A880]/25 flex items-center justify-center mb-4 shadow-inner">
+                      <Award className="w-6 h-6 text-[#C5A880]" />
+                    </div>
+                    <span className="font-serif text-2xl tracking-widest text-[#C5A880] font-light">
+                      {doc.name.split(' ').filter((n: string) => !n.includes('.')).map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                    </span>
+                    <span className="text-[10px] uppercase tracking-widest text-slate-400 mt-2 block font-mono">
+                      Equipe Luna & Mendes
+                    </span>
+                    {/* Detalhe estético em linhas sutis */}
+                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#C5A880_1px,transparent_1px)] [background-size:16px_16px]" />
                   </div>
-                )}
+                </div>
 
                 <div className="p-5 sm:p-6 space-y-5 flex-grow">
                   {/* Categoria / CRM */}
@@ -1949,7 +2163,7 @@ export default function App() {
 
             </div>
 
-            {/* Mockup Interativo e Lindo de Mapa com SVG customizado para a Região de Cariri/Aurora */}
+            {/* Mapa Interativo do Google Maps para a Clínica Luna & Mendes em Aurora-CE */}
             <div className="lg:col-span-7" id="interactive-map">
               <div className="bg-slate-50 p-5 rounded-3xl border shadow-sm space-y-4">
                 
@@ -1959,7 +2173,7 @@ export default function App() {
                     <span className="text-xs font-bold text-[#0A2B2A]">Mapa Esquemático de Aurora-CE</span>
                   </div>
                   <a 
-                    href="https://maps.google.com/?q=Avenida+Ant%C3%B4nio+Ricardo,+Aurora,+Ceara,+Brazil" 
+                    href="https://maps.google.com/?q=Av.+Ant%C3%B4nio+Ricardo,+29,+Centro,+Aurora+-+CE,+63360-000" 
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center px-3 py-1.5 rounded-lg bg-white border text-[11px] font-bold text-[#0A2B2A] hover:bg-slate-100"
@@ -1969,56 +2183,118 @@ export default function App() {
                   </a>
                 </div>
 
-                {/* Mapa Esquemático do Centro de Aurora CE */}
-                <div className="bg-slate-150 relative h-72 rounded-2xl overflow-hidden shadow-inner flex flex-col justify-end p-4 border border-slate-300/40">
+                {/* Container do Mapa Vetorial Interativo - Geograficamente fiel e livre de bloqueios */}
+                <div className="relative h-[340px] rounded-2xl overflow-hidden shadow-inner border border-slate-200 bg-[#EDF3F2] flex items-center justify-center">
                   
-                  {/* Centralizador Responsivo */}
-                  <div className="absolute inset-x-0 top-0 bottom-16 flex items-center justify-center overflow-hidden">
-                    <div className="relative w-[345px] h-[240px] flex-shrink-0 scale-90 sm:scale-100 transition-transform">
-                      {/* Ilustrações de Quadras Municipais */}
-                      <svg className="absolute inset-0 w-full h-full text-slate-300 opacity-80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        {/* Quadras */}
-                        <rect x="20" y="30" width="130" height="70" rx="8" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="1.5" />
-                        <rect x="170" y="30" width="160" height="70" rx="8" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="1.5" />
-                        
-                        <rect x="20" y="120" width="130" height="80" rx="8" fill="#cbd5e1" stroke="#94a3b8" strokeWidth="1.5" />
-                        {/* Praça da Matriz */}
-                        <rect x="170" y="120" width="130" height="80" rx="12" fill="#d1fae5" stroke="#10b981" strokeWidth="1.5" />
-                        <text x="180" y="150" fill="#047857" className="text-[10px] font-bold">Praça da Matriz</text>
-                        <text x="180" y="165" fill="#065f46" className="text-[9px]">Aurora - CE</text>
+                  {/* Map Design Canvas */}
+                  <div className="absolute inset-0 w-full h-full select-none overflow-hidden">
+                    {/* Grid Pattern para Fundo de Mapa */}
+                    <div className="absolute inset-0 opacity-15 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:24px_24px]"></div>
 
-                        {/* Avenida Antônio Ricardo intersect */}
-                        <line x1="160" y1="10" x2="160" y2="280" stroke="#94a3b8" strokeWidth="16" />
-                        <line x1="160" y1="10" x2="160" y2="280" stroke="#ffffff" strokeWidth="2.5" strokeDasharray="5 5" />
-                        
-                        <text x="100" y="240" fill="#475569" className="text-[9px] font-semibold transform rotate-90">Avenida Antonio Ricardo</text>
-                      </svg>
+                    {/* Rio Salgado (Curva Geográfica Fiel de Aurora-CE) */}
+                    <svg className="absolute right-4 top-0 h-full w-40 text-[#C1DBE3]/60 drop-shadow-sm" fill="none" preserveAspectRatio="none" viewBox="0 0 100 300">
+                      <path d="M40,0 C80,80 10,180 60,300" stroke="currentColor" strokeWidth="18" fill="none" strokeLinecap="round" />
+                    </svg>
 
-                      {/* Pin Pulsante na Avenida Antônio Ricardo */}
-                      <div className="absolute top-[170px] left-[160px] transform -translate-x-1/2 -translate-y-1/2 group z-10">
-                        <div className="absolute -inset-4 bg-[#C5A880]/30 rounded-full animate-ping pointer-events-none"></div>
-                        <div className="w-8 h-8 rounded-full bg-[#0A2B2A] border-2 border-[#C5A880] flex items-center justify-center shadow-lg relative cursor-pointer">
-                          <span className="w-2.5 h-2.5 rounded-full bg-[#C5A880]"></span>
+                    {/* Malha Viária de Aurora - CE */}
+                    <svg className="absolute inset-0 w-full h-full text-white" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      {/* CE-288 (Rodovia Horizontal) */}
+                      <path d="M-20,120 L500,120" stroke="#FFF" strokeWidth="16" strokeLinecap="round" />
+                      <path d="M-20,120 L500,120" stroke="#FDE047" strokeWidth="2.5" strokeDasharray="6 6" strokeLinecap="round" className="opacity-70" />
+                      
+                      {/* Av. Antônio Ricardo (Vertical Principal) */}
+                      <path d="M190,-20 L190,360" stroke="#FFF" strokeWidth="20" strokeLinecap="round" />
+                      <path d="M190,-20 L190,360" stroke="#E2E8F0" strokeWidth="1" strokeDasharray="4 4" />
+
+                      {/* Rua Coronel João de Souza */}
+                      <path d="M-20,240 Q190,230 500,210" stroke="#FFF" strokeWidth="10" strokeLinecap="round" />
+
+                      {/* Rua dos Expedicionários */}
+                      <path d="M320,-20 L320,360" stroke="#FFF" strokeWidth="10"  strokeLinecap="round"/>
+                    </svg>
+
+                    {/* Rótulos das Ruas em posições estratégicas */}
+                    <span className="absolute top-[96px] left-6 text-[8.5px] uppercase font-bold tracking-widest text-[#4A6B6C] bg-white/70 px-1 py-[1.2px] rounded">CE-288</span>
+                    <span className="absolute top-[28px] left-[202px] text-[8.5px] uppercase font-bold tracking-widest text-[#4A6B6C] rotate-90 origin-left">Av. Antônio Ricardo</span>
+                    <span className="absolute top-[218px] left-8 text-[8px] font-semibold text-[#6B8586]">Rua Cel. João de Souza</span>
+
+                    {/* Ponto Turístico: Praça da Estação (Lazer e Natureza) */}
+                    <div className="absolute top-[40px] left-[40px] flex items-center space-x-1.5 bg-[#E6F3EA] border border-[#A7F3D0] rounded-full px-2.5 py-1 shadow-sm">
+                      <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                      <span className="text-[10px] font-bold text-emerald-800 tracking-wide">Praça da Estação</span>
+                    </div>
+
+                    {/* Ponto Comercial Paralelo 1: Modontos Aurora */}
+                    <div className="absolute top-[160px] left-[50px] flex items-center space-x-1 bg-white border border-slate-200 rounded px-1.5 py-0.5 shadow-xs opacity-85">
+                      <span className="w-1 h-1 bg-sky-400 rounded-full"></span>
+                      <span className="text-[8px] font-medium text-slate-600">Modontos Aurora</span>
+                    </div>
+
+                    {/* Ponto Comercial Paralelo 2: Studio Mirlley Brito */}
+                    <div className="absolute top-[80px] left-[240px] flex items-center space-x-1 bg-white border border-slate-200 rounded px-1.5 py-0.5 shadow-xs opacity-85">
+                      <span className="w-1 h-1 bg-pink-400 rounded-full"></span>
+                      <span className="text-[8px] font-medium text-slate-600">Studio Mirlley Brito</span>
+                    </div>
+
+                    {/* Rio Salgado Label */}
+                    <span className="absolute right-[45px] top-[140px] text-[9px] italic font-serif text-[#7DA2B0] rotate-[80deg]">Rio Salgado</span>
+
+                    {/* PIN PRINCIPAL - Clínica Luna & Mendes (Av. Antônio Ricardo, 29) */}
+                    <div className="absolute top-[180px] left-[190px] -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center">
+                      {/* Pulse Ring */}
+                      <span className="absolute -top-1 w-10 h-10 bg-rose-500/30 rounded-full animate-ping pointer-events-none"></span>
+                      
+                      {/* Red Marker pin */}
+                      <div className="relative group cursor-pointer flex flex-col items-center">
+                        <div className="w-8 h-8 rounded-full bg-rose-600 border-2 border-white flex items-center justify-center shadow-lg transform group-hover:scale-110 active:scale-95 transition-all">
+                          <MapPin className="w-4 h-4 text-white" />
                         </div>
-                        <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 bg-[#0A2B2A] text-white text-[9px] font-bold rounded-lg px-2.5 py-1.5 shadow-lg whitespace-nowrap border border-[#C5A880]/35 uppercase">
-                          Clínica Luna & Mendes
+                        {/* Pin Tail */}
+                        <div className="w-2 h-2 bg-rose-600 rotate-45 transform -translate-y-1 border-r border-b border-white"></div>
+
+                        {/* Floating Tooltip Label */}
+                        <div className="absolute -top-11 bg-[#0A2B2A] text-white text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-md whitespace-nowrap border border-[#C5A880]/40 uppercase tracking-wider scale-95 md:scale-100">
+                          Luna & Mendes • Nº 29
                         </div>
                       </div>
                     </div>
+
+                    {/* Bússola Decorativa */}
+                    <div className="absolute top-4 right-4 w-10 h-10 rounded-full border border-slate-300/60 flex items-center justify-center bg-white/50 backdrop-blur-xs text-slate-400 pointer-events-none">
+                      <span className="text-[9px] font-black tracking-widest">N</span>
+                      <div className="absolute w-[2px] h-4 bg-rose-500 -top-[3px] left-[18px]"></div>
+                      <div className="absolute w-[2px] h-4 bg-slate-400 -bottom-[3px] left-[18px]"></div>
+                    </div>
                   </div>
 
-                  {/* Informações Esquemáticas do Rodapé */}
-                  <div className="bg-[#0A2B2A]/90 p-4 rounded-xl text-white relative z-10 max-w-sm flex items-center justify-between backdrop-blur-sm mx-auto w-full">
-                    <div>
-                      <p className="text-[11px] font-bold">Avenida Antônio Ricardo, SN</p>
-                      <p className="text-[9px] text-[#E3C9A6] mt-0.5">Próximo à Praça Central, Aurora - CE</p>
+                  {/* Botão Flutuante Superior Esquerdo "Abrir no Maps" */}
+                  <a
+                    href="https://maps.google.com/?q=Av.+Ant%C3%B4nio+Ricardo,+29,+Centro,+Aurora+-+CE,+63360-000"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute top-4 left-4 bg-white hover:bg-slate-50 text-[11px] font-bold text-slate-700 px-3.5 py-2 rounded-xl shadow-md border border-slate-200/80 flex items-center transition-colors z-20 pointer-events-auto"
+                  >
+                    Navegar no Google Maps
+                    <ExternalLink className="w-3 h-3 ml-1.5 text-slate-500" />
+                  </a>
+
+                  {/* Card Central de Endereço - Sobposto ao mapa igual imagem */}
+                  <div className="absolute bottom-4 left-4 right-4 sm:left-6 sm:right-auto sm:max-w-md bg-[#0A2B2A]/95 backdrop-blur-md p-4 rounded-xl shadow-xl border border-[#C5A880]/30 flex items-center justify-between gap-6 z-20 pointer-events-auto">
+                    <div className="text-left text-white leading-tight">
+                      <p className="text-xs sm:text-sm font-bold tracking-wide">Av. Antônio Ricardo, 29</p>
+                      <p className="text-[10px] text-slate-300 font-medium mt-1">Centro, Aurora - CE, 63360-000</p>
                     </div>
                     <button
-                      onClick={() => handleCopyText("Avenida Antônio Ricardo, SN, Aurora, CE", "route-copied")}
-                      className="bg-[#C5A880] hover:bg-[#E3C9A6] text-[#0A2B2A] transition-colors text-[10px] font-bold px-3 py-1.5 rounded-md"
+                      onClick={() => handleCopyText("Av. Antônio Ricardo, 29, Centro, Aurora - CE, 63360-000", "route-copied")}
+                      className="bg-[#C5A880] hover:bg-[#E3C9A6] text-[#0A2B2A] transition-all text-[11px] font-bold px-4 py-2 rounded-full whitespace-nowrap active:scale-95"
                     >
                       {copiedId === "route-copied" ? 'Copiado!' : 'Copiar Rota'}
                     </button>
+                  </div>
+
+                  {/* Marcadores de copyright do mapa para ambientação na lateral inferior direita */}
+                  <div className="absolute bottom-1 right-2 bg-white/80 backdrop-blur-[1px] px-1.5 py-[2px] rounded text-[8px] text-slate-500 font-sans pointer-events-none select-none hidden sm:block">
+                    Mapa de Rotas Interativo • Luna & Mendes
                   </div>
 
                 </div>
@@ -2040,9 +2316,7 @@ export default function App() {
             {/* Sobre a Marca */}
             <div className="space-y-4" id="footer-about">
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-lg bg-[#C5A880] flex items-center justify-center text-[#0A2B2A] font-black text-xs">
-                  LM
-                </div>
+                <ClinicLogo size={36} variant="gold-teal" />
                 <span className="text-white font-serif font-bold text-lg tracking-wider">LUNA & MENDES</span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
@@ -2082,7 +2356,7 @@ export default function App() {
                 </li>
                 <li className="flex items-start space-x-2">
                   <MapPin className="w-4 h-4 text-[#C5A880] flex-shrink-0" />
-                  <span>Av. Antônio Ricardo, Centro, Aurora-CE</span>
+                  <span>Av. Antônio Ricardo, 29, Centro, Aurora-CE</span>
                 </li>
               </ul>
             </div>
@@ -2118,6 +2392,8 @@ export default function App() {
               </a>
               <span>•</span>
               <a href="#localizacao" className="hover:text-white">Aurora-CE</a>
+              <span>•</span>
+              <Link to="/admin/login" className="hover:text-amber-400 font-semibold text-amber-500">Painel Administrativo</Link>
             </div>
           </div>
 
@@ -2423,3 +2699,20 @@ export default function App() {
     </div>
   );
 }
+
+export default function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/agendar" element={<PublicAgendar />} />
+        <Route path="/admin/login" element={<LoginAdmin />} />
+        <Route path="/admin/dashboard" element={<DashboardAdmin />} />
+        <Route path="/image-mapper" element={<ImageMapper />} />
+        {/* Fallback para home se houver rotas desconhecidas */}
+        <Route path="*" element={<LandingPage />} />
+      </Routes>
+    </Router>
+  );
+}
+
