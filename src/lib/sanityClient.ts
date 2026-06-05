@@ -1,5 +1,5 @@
 import { createClient } from '@sanity/client';
-import imageUrlBuilder from '@sanity/image-url';
+import { createImageUrlBuilder } from '@sanity/image-url';
 
 const projectId = (import.meta as any).env.VITE_SANITY_PROJECT_ID || 'dummy-project-id';
 const dataset = (import.meta as any).env.VITE_SANITY_DATASET || 'production';
@@ -14,7 +14,7 @@ export const sanityClient = createClient({
 });
 
 // Inicializador do construtor de URLs de imagens do Sanity
-const builder = imageUrlBuilder(sanityClient);
+const builder = createImageUrlBuilder(sanityClient);
 
 // Função auxiliar e robusta para gerar as URLs dos assets de imagem de forma dinâmica
 // Recebe o objeto asset de imagem recebido do Sanity e gera a URL final otimizada

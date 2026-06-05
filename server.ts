@@ -75,7 +75,7 @@ async function startServer() {
     });
   });
 
-  // Registro das rotas API RESTful (Prisma PostgreSQL) - ANTES do catch-all
+  // Registro das rotas API RESTful (Prisma PostgreSQL)
   app.use("/api/auth", authRouter);
   app.use("/api/medicos", medicosRouter);
   app.use("/api/horarios", horariosRouter);
@@ -95,7 +95,6 @@ async function startServer() {
     console.log("Servindo arquivos estáticos em modo produção...");
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
-    // SPA Fallback: Redireciona qualquer rota não-API para o index.html (DEPOIS das rotas de API)
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
