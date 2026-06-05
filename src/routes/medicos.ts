@@ -11,15 +11,19 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 /**
  * GET /api/medicos
- * Público: Lista todos os médicos cadastrados
+ * Público: Lista todos os médicos cadastrados (Otimizado com SELECT)
  */
 router.get('/', async (req: Request, res: Response) => {
   try {
     const prisma = getPrisma();
     const medicos = await prisma.medico.findMany({
-      include: {
+      select: {
+        id: true,
+        nome: true,
+        especialidade: true,
+        foto_url: true,
         _count: {
-          select: { horarios: true }
+          select: { horarios: { where: { status_disponivel: true } } }
         }
       }
     });

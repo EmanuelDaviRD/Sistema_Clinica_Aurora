@@ -25,7 +25,11 @@ router.get('/', async (req: Request, res: Response) => {
 
     const horarios = await prisma.horario.findMany({
       where: whereClause,
-      include: {
+      select: {
+        id: true,
+        data_hora: true,
+        medico_id: true,
+        status_disponivel: true,
         medico: {
           select: { nome: true, especialidade: true }
         },

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, FormEvent, useMemo } from 'react';
 import { useSanityData } from './hooks/useSanityData';
 import { WhatsAppFloatingButton } from './components/WhatsAppFloatingButton';
 import { ServiceCTAButton } from './components/ServiceCTAButton';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { LoginAdmin } from './components/LoginAdmin';
 import { DashboardAdmin } from './components/DashboardAdmin';
 import { PublicAgendar } from './components/PublicAgendar';
@@ -55,6 +55,7 @@ interface AppointmentData {
 }
 
 export function LandingPage() {
+  const navigate = useNavigate();
   // Estados de controle de menus e modais de agendamento
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -1012,7 +1013,7 @@ export function LandingPage() {
 
               <div className="flex flex-col sm:flex-row gap-4 pt-4" id="hero-actions">
                 <button
-                  onClick={() => setIsBookingModalOpen(true)}
+                  onClick={() => navigate('/agendar')}
                   className="bg-gradient-to-r from-[#C5A880] to-[#E3C9A6] text-[#0A2B2A] font-extrabold px-8 py-4 rounded-xl text-sm shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-2 shrink-0 cursor-pointer"
                 >
                   <Calendar className="w-4.5 h-4.5" />
@@ -1362,7 +1363,7 @@ export function LandingPage() {
                                     doctor: doc.name
                                   });
                                   setBookingStep(1);
-                                  setIsBookingModalOpen(true);
+                                  navigate('/agendar');
                                 }}
                                 className="text-[#0A2B2A] hover:text-[#C5A880] text-xs font-bold transition-colors"
                               >
@@ -1411,7 +1412,7 @@ export function LandingPage() {
                                     checkup: chk.name
                                   });
                                   setBookingStep(1);
-                                  setIsBookingModalOpen(true);
+                                  navigate('/agendar');
                                 }}
                                 className="bg-[#0A2B2A] hover:bg-[#134645] text-white text-xs font-bold px-5 py-2.5 rounded-lg transition-all"
                               >
@@ -1521,7 +1522,7 @@ export function LandingPage() {
                         checkup: chk.name
                       });
                       setBookingStep(1);
-                      setIsBookingModalOpen(true);
+                      navigate('/agendar');
                     }}
                     className="w-full bg-[#0A2B2A]/90 hover:bg-[#0A2B2A] text-[#FAF8F5] py-2.5 rounded-xl text-xs font-bold transition-all hover:scale-[1.02] cursor-pointer"
                   >
@@ -1586,7 +1587,7 @@ export function LandingPage() {
                               checkup: srv.name
                             });
                             setBookingStep(1);
-                            setIsBookingModalOpen(true);
+                            navigate('/agendar');
                           }}
                           className="text-[#0A2B2A] hover:underline text-[11px] font-bold transition-all"
                         >
@@ -1810,7 +1811,7 @@ export function LandingPage() {
                         doctor: doc.name
                       });
                       setBookingStep(1);
-                      setIsBookingModalOpen(true);
+                      navigate('/agendar');
                     }}
                     className="text-[#0A2B2A] hover:text-[#C5A880] font-bold text-xs inline-flex items-center cursor-pointer"
                   >
@@ -1878,7 +1879,7 @@ export function LandingPage() {
                       doctor: ''
                     });
                     setBookingStep(1);
-                    setIsBookingModalOpen(true);
+                    navigate('/agendar');
                   }}
                   className="bg-[#0A2B2A] text-white hover:bg-[#134645] font-bold px-6 py-3 rounded-xl text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer"
                 >
@@ -2399,299 +2400,6 @@ export function LandingPage() {
 
         </div>
       </footer>
-
-      {/* 10. MODAL MULTI-ETAPAS DE AGENDAMENTO INTERATIVO */}
-      {isBookingModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" id="modal-overlay">
-          
-          <div 
-            onClick={resetBooking}
-            className="fixed inset-0 bg-[#0A2B2A]/70 backdrop-blur-sm transition-opacity duration-300"
-          ></div>
-
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
-            <div className="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-md border border-slate-100" id="modal-container">
-              
-              {/* Header do Modal */}
-              <div className="bg-slate-50 px-6 py-5 border-b border-slate-100 flex items-center justify-between">
-                <div>
-                  <h3 className="font-serif text-lg font-bold text-[#0A2B2A]">Solicitação Online Luna & Mendes</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Atendimento rápido e preenchimento de solicitação imediata.</p>
-                </div>
-                <button 
-                  onClick={resetBooking}
-                  className="p-1 rounded-lg text-slate-400 hover:bg-slate-200 hover:text-slate-800 transition-colors cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Linha de Progresso */}
-              <div className="px-6 py-3 bg-[#FAF8F5] border-b flex justify-between items-center text-[11px]">
-                <span className={`font-bold ${bookingStep >= 1 ? 'text-[#0A2B2A]' : 'text-slate-400'}`}>1. Serviço e Data</span>
-                <ChevronRight className="w-3 h-3 text-slate-300" />
-                <span className={`font-bold ${bookingStep >= 2 ? 'text-[#0A2B2A]' : 'text-slate-400'}`}>2. Identificação</span>
-                <ChevronRight className="w-3 h-3 text-slate-300" />
-                <span className={`font-bold ${bookingStep >= 3 ? 'text-emerald-600' : 'text-slate-400'}`}>3. Solicitação Enviada</span>
-              </div>
-
-              {/* Form de Agendamento */}
-              <form onSubmit={handleBookingSubmit}>
-                
-                {validationError && (
-                  <div className="mx-6 mt-4 p-3 bg-red-50 text-red-800 border border-red-200 rounded-xl text-xs font-semibold flex items-start gap-2 animate-pulse" id="booking-validation-error">
-                    <span className="shrink-0 mt-0.5">⚠️</span>
-                    <span>{validationError}</span>
-                  </div>
-                )}
-                
-                {bookingStep === 1 && (
-                  <div className="p-6 space-y-4" id="booking-step-1">
-                    
-                    {/* Especialidade */}
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-[#0A2B2A] block">Qual cuidado você deseja agendar?</label>
-                      <select 
-                        required
-                        value={appointment.specialty}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setAppointment({ ...appointment, specialty: val, doctor: '' });
-                        }}
-                        className="w-full text-xs bg-[#FAF8F5] border border-slate-200 rounded-xl px-4.5 py-3 focus:outline-none focus:ring-2 focus:ring-[#0A2B2A]/15 text-slate-800"
-                      >
-                        <option value="">Selecione a Área de Interesse...</option>
-                        <option value="Análises Clínicas">Análises Clínicas & Preventivos</option>
-                        <option value="Cardiologia">Consulta Cardiológica</option>
-                        <option value="Ginecologia">Ginecologia & Saúde da Mulher</option>
-                        <option value="Urologia">Urologia / Cirurgias Gerais</option>
-                        <option value="Reabilitação">Espaço Reabilitar (Terapias / Autismo / ABA)</option>
-                      </select>
-                    </div>
-
-                    {/* Clínico ou Terapeuta */}
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-[#0A2B2A] block">Deseja selecionar especialista? (Opcional)</label>
-                      <select 
-                        value={appointment.doctor}
-                        onChange={(e) => setAppointment({ ...appointment, doctor: e.target.value })}
-                        className="w-full text-xs bg-[#FAF8F5] border border-slate-200 rounded-xl px-4.5 py-3 focus:outline-none focus:ring-2 focus:ring-[#0A2B2A]/15 text-slate-800"
-                      >
-                        <option value="">Qualquer especialista disponível</option>
-                        {finalDoctors.map((doc: any) => (
-                          <option key={doc.id} value={doc.name}>
-                            {doc.name} ({doc.role.split(' ')[1] || doc.role})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Data de agendamento desejado */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-[#0A2B2A] block">Data Desejada</label>
-                        <input 
-                          type="date" 
-                          required
-                          min={todayStr}
-                          value={appointment.date}
-                          onChange={(e) => {
-                            setValidationError(null);
-                            setAppointment({ ...appointment, date: e.target.value });
-                          }}
-                          className="w-full text-xs bg-[#FAF8F5] border border-slate-200 rounded-xl px-4.5 py-3 focus:outline-none focus:ring-2"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-[#0A2B2A] block">Período</label>
-                        <select 
-                          required
-                          value={appointment.time}
-                          onChange={(e) => {
-                            setValidationError(null);
-                            setAppointment({ ...appointment, time: e.target.value });
-                          }}
-                          className="w-full text-xs bg-[#FAF8F5] border border-slate-200 rounded-xl px-4.5 py-3 focus:outline-none focus:ring-2"
-                        >
-                          <option value="">Selecione...</option>
-                          <option value="Manhã (07h às 12h)">Manhã</option>
-                          <option value="Tarde (13h às 18h)">Tarde</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 flex justify-end">
-                      <button
-                        type="button"
-                        disabled={!appointment.specialty || !appointment.date || !appointment.time}
-                        onClick={() => {
-                          if (appointment.date < todayStr) {
-                            setValidationError('Selecione uma data atual ou futura para o agendamento.');
-                            return;
-                          }
-                          setValidationError(null);
-                          setBookingStep(2);
-                        }}
-                        className="bg-[#0A2B2A] text-white hover:bg-[#134645] disabled:bg-slate-200 disabled:text-slate-400 font-bold px-6 py-3 rounded-xl text-xs flex items-center space-x-2 transition-all cursor-pointer"
-                      >
-                        <span>Próximo Passo</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                  </div>
-                )}
-
-                {bookingStep === 2 && (
-                  <div className="p-6 space-y-4" id="booking-step-2">
-                    
-                    {/* Nome do paciente */}
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-[#0A2B2A] block">Nome Completo do Paciente</label>
-                      <input 
-                        type="text" 
-                        required
-                        placeholder="Ex: Pedro Henrique Alencar"
-                        value={appointment.patientName}
-                        onChange={(e) => {
-                          setValidationError(null);
-                          setAppointment({ ...appointment, patientName: sanitizeText(e.target.value, 60) });
-                        }}
-                        className="w-full text-xs bg-[#FAF8F5] border border-slate-200 rounded-xl px-4.5 py-3 focus:outline-none focus:ring-2 text-slate-800"
-                      />
-                    </div>
-
-                    {/* WhatsApp */}
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-[#0A2B2A] block">Número do Celular / WhatsApp</label>
-                      <input 
-                        type="tel" 
-                        required
-                        placeholder="Ex: (88) 99999-9999"
-                        value={appointment.phone}
-                        onChange={(e) => {
-                          setValidationError(null);
-                          setAppointment({ ...appointment, phone: sanitizePhoneNumber(e.target.value) });
-                        }}
-                        className="w-full text-xs bg-[#FAF8F5] border border-slate-200 rounded-xl px-4.5 py-3 focus:outline-none focus:ring-2 text-slate-800"
-                      />
-                    </div>
-
-                    {/* Forma de atendimento */}
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-[#0A2B2A] block">Forma de Acordo</label>
-                      <div className="grid grid-cols-2 gap-3 pt-1">
-                        <button
-                          type="button"
-                          onClick={() => setAppointment({ ...appointment, plan: 'particular' })}
-                          className={`p-3 rounded-xl border text-[10px] font-bold text-center transition-all cursor-pointer ${
-                            appointment.plan === 'particular' ? 'bg-[#FAF8F5] border-[#C5A880] text-[#0A2B2A] ring-2 ring-[#C5A880]/15' : 'bg-white border-slate-200 text-slate-600'
-                          }`}
-                        >
-                          Particular
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setAppointment({ ...appointment, plan: 'convenio' })}
-                          className={`p-3 rounded-xl border text-[10px] font-bold text-center transition-all cursor-pointer ${
-                            appointment.plan === 'convenio' ? 'bg-[#FAF8F5] border-[#C5A880] text-[#0A2B2A] ring-2 ring-[#C5A880]/15' : 'bg-white border-slate-200 text-slate-600'
-                          }`}
-                        >
-                          Reembolso Facilitado
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                      <button
-                        type="button"
-                        onClick={() => setBookingStep(1)}
-                        className="text-slate-500 hover:text-slate-800 text-xs font-bold cursor-pointer"
-                      >
-                        Voltar
-                      </button>
-
-                      <button
-                        type="submit"
-                        disabled={!appointment.patientName || !appointment.phone || isSubmitting || rateLimited}
-                        className="bg-[#0A2B2A] hover:bg-[#134645] disabled:bg-slate-200 text-white font-bold px-6 py-3 rounded-xl text-xs transition-colors cursor-pointer flex items-center space-x-2"
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                            </svg>
-                            <span>Processando de forma segura...</span>
-                          </>
-                        ) : (
-                          <span>Confirmar e Enviar</span>
-                        )}
-                      </button>
-                    </div>
-
-                  </div>
-                )}
-
-                {bookingStep === 3 && (
-                  <div className="p-8 text-center space-y-6" id="booking-step-3">
-                    
-                    <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center animate-pulse">
-                      <Check className="w-8 h-8" />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <h4 className="font-serif text-[#0A2B2A] text-lg font-bold">Solicitação Encaminhada!</h4>
-                      <p className="text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
-                        Olá <strong>{appointment.patientName}</strong>, recebemos sua solicitação de agendamento presencial clínica na <strong>Luna & Mendes</strong>.
-                      </p>
-                    </div>
-
-                     <div className="bg-[#FAF8F5] border rounded-2xl p-4 text-xs text-left text-slate-600 space-y-1.5">
-                      <p><strong>Cuidado:</strong> {appointment.specialty}</p>
-                      {appointment.doctor && <p><strong>Especialista:</strong> {appointment.doctor}</p>}
-                      {appointment.checkup && <p><strong>Check-up selecionado:</strong> {appointment.checkup}</p>}
-                      <p><strong>Data Desejada:</strong> {appointment.date.split('-').reverse().join('/')}</p>
-                      <p><strong>Período:</strong> {appointment.time}</p>
-                      <p><strong>WhatsApp:</strong> {appointment.phone}</p>
-                      <p className="pt-2 border-t border-slate-200 mt-2 text-[10px] text-slate-400 font-mono flex flex-col gap-0.5" id="appointment-security-signature">
-                        <span className="font-sans text-[8px] uppercase tracking-wider text-slate-500 font-bold block">Assinatura de Segurança (Idempotência):</span>
-                        <span className="font-semibold break-all text-[#0A2B2A]/70">{idempotencyKey}</span>
-                      </p>
-                    </div>
-
-                    <div className="p-3 bg-emerald-50 text-emerald-800 rounded-xl text-[11px] font-bold">
-                      Toque no botão de WhatsApp central ou aguarde nossa recepção confirmar suas guias e datas preparativas.
-                    </div>
-
-                    <div className="flex gap-3">
-                      <a
-                        href={`https://wa.me/5588996248427?text=Olá,%20sou%20${encodeURIComponent(appointment.patientName)},%20solicitei%20agendamento%20para%20${encodeURIComponent(appointment.specialty)}%20pelo%20site.`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-bold text-xs inline-flex items-center justify-center space-x-1.5 transition-all"
-                      >
-                        <MessageCircle className="w-4 h-4 fill-white text-emerald-500" />
-                        <span>Confirmar no WhatsApp</span>
-                      </a>
-                      <button
-                        type="button"
-                        onClick={resetBooking}
-                        className="border hover:bg-slate-50 text-slate-600 font-bold px-4 rounded-xl text-xs"
-                      >
-                        Fechar
-                      </button>
-                    </div>
-
-                  </div>
-                )}
-
-              </form>
-
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Botão Flutuante Permanente do WhatsApp do Cliente Real de Alta Conversão */}
       <WhatsAppFloatingButton phone={centralWhatsApp} />

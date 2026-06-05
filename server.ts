@@ -1,6 +1,7 @@
 import express from "express";
 import path from "path";
 import cors from "cors";
+import compression from "compression";
 import { createServer as createViteServer } from "vite";
 
 // Rotas integradas
@@ -14,9 +15,10 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  // Middlewares essenciais para API REST
+  // Middlewares essenciais para API REST e Otimização
   app.use(cors());
   app.use(express.json());
+  app.use(compression()); // Middleware para comprimir o payload das requisições (GZIP)
 
   // Log simples de requisições de API
   app.use((req, res, next) => {

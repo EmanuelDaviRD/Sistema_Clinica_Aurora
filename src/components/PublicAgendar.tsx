@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import useSWR from 'swr';
 import { 
   Calendar, Clock, User, Phone, ChevronRight, Stethoscope, 
-  ArrowLeft, CheckCircle, RefreshCw, AlertCircle 
+  ArrowLeft, CheckCircle, AlertCircle 
 } from 'lucide-react';
 
 interface Medico {
@@ -10,6 +11,7 @@ interface Medico {
   nome: string;
   especialidade: string;
   foto_url?: string;
+  _count?: { horarios: number };
 }
 
 interface Horario {
@@ -24,11 +26,29 @@ interface Horario {
   };
 }
 
+const fetcher = (url: string) => fetch(url).then((res) => {
+  if (!res.ok) throw new Error('Falha ao buscar dados');
+  return res.json();
+});
+
 export const PublicAgendar: React.FC = () => {
   const navigate = useNavigate();
-  const [medicos, setMedicos] = useState<Medico[]>([]);
-  const [horariosDisponiveis, setHorariosDisponiveis] = useState<Horario[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  
+  // Utilizando SWR para Cache e Deduplicação de requisições (Blindagem do Front-end)
+  const { data: medicos, error: errorMedicos, isLoading: isLoadingMedicos } = useSWR<Medico[]>(
+    '/api/medicos', 
+    fetcher, 
+    { dedupingInterval: 300000, revalidateOnFocus: false } // Cache de 5 minutos
+  );
+  
+  const { data: horariosDisponiveis, error: errorHorarios, isLoading: isLoadingHorarios } = useSWR<Horario[]>(
+    '/api/horarios?apenas_disponiveis=true', 
+    fetcher, 
+    { dedupingInterval: 300000, revalidateOnFocus: false }
+  );
+
+  const isLoading = isLoadingMedicos || isLoadingHorarios;
+  const isError = errorMedicos || errorHorarios;
 
   // Seleções do fluxo de agendamento
   const [medicoSelecionado, setMedicoSelecionado] = useState<Medico | null>(null);
@@ -42,29 +62,8 @@ export const PublicAgendar: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [agendamentoSucesso, setAgendamentoSucesso] = useState<any>(null);
 
-  // Inicializa dados trazendo os registros ativos do banco de dados
-  useEffect(() => {
-    const loadBookingData = async () => {
-      try {
-        const [resMedicos, resHorarios] = await Promise.all([
-          fetch('/api/medicos'),
-          fetch('/api/horarios?apenas_disponiveis=true')
-        ]);
-
-        if (resMedicos.ok) setMedicos(await resMedicos.json());
-        if (resHorarios.ok) setHorariosDisponiveis(await resHorarios.json());
-      } catch (err) {
-        console.error('Falha ao conectar com o banco de dados:', err);
-        setErrorMsg('Serviços temporariamente indisponíveis. Por favor, tente novamente mais tarde.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadBookingData();
-  }, []);
-
   // Lista de horários filtrada de acordo com o médico que o paciente escolheu
-  const horariosDoMedico = horariosDisponiveis.filter(
+  const horariosDoMedico = (horariosDisponiveis || []).filter(
     (h) => !medicoSelecionado || h.medico_id === medicoSelecionado.id
   );
 
@@ -121,12 +120,41 @@ export const PublicAgendar: React.FC = () => {
     }
   };
 
+  // Skeleton Loading Elegante para a Tabela de Médicos
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center p-4">
-        <div className="text-center">
-          <RefreshCw className="w-10 h-10 animate-spin text-[#0A2B2A] mx-auto mb-4" />
-          <p className="text-xs text-slate-500 font-mono">Carregando médicos e horários disponíveis...</p>
+        <div className="bg-white border border-[#C5A880]/20 rounded-2xl shadow-xl overflow-hidden p-6 md:p-8 w-full max-w-xl animate-pulse">
+          <div className="h-6 bg-slate-200 rounded w-1/3 mb-2"></div>
+          <div className="h-3 bg-slate-100 rounded w-1/2 mb-8"></div>
+          
+          <div className="space-y-4">
+            {[1, 2, 3].map((skeleton) => (
+              <div key={skeleton} className="flex items-center space-x-4 p-4 border border-slate-100 rounded-xl">
+                <div className="w-12 h-12 bg-slate-200 rounded-full shrink-0"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+                  <div className="h-3 bg-slate-100 rounded w-1/2"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Graceful Degradation / Fallback no caso da API Falhar (Offline/Erro de DB)
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center p-4">
+        <div className="text-center bg-white p-8 rounded-2xl shadow-sm border border-red-100 max-w-sm">
+          <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <h2 className="text-xl font-serif text-[#0A2B2A] font-bold">Serviço Indisponível</h2>
+          <p className="text-sm text-slate-500 mt-2 mb-6">Infelizmente não foi possível carregar os horários. Verifique sua conexão ou tente novamente mais tarde.</p>
+          <button onClick={() => navigate('/')} className="bg-[#0A2B2A] text-white px-6 py-2 rounded-xl text-xs font-bold">
+            Voltar ao Início
+          </button>
         </div>
       </div>
     );
@@ -189,7 +217,7 @@ export const PublicAgendar: React.FC = () => {
           <div className="space-y-4">
             <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">1. Escolha o Médico</h3>
             
-            {medicos.length === 0 ? (
+            {(!medicos || medicos.length === 0) ? (
               <p className="text-center py-10 text-xs text-slate-400 font-mono">Nenhum médico disponível para agendamento no momento.</p>
             ) : (
               <div className="space-y-3">
