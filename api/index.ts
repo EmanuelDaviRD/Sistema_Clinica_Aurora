@@ -1,10 +1,10 @@
 import express from "express";
 import cors from "cors";
-import authRouter from "../src/routes/auth.ts";
-import medicosRouter from "../src/routes/medicos.ts";
-import horariosRouter from "../src/routes/horarios.ts";
-import agendamentosRouter from "../src/routes/agendamentos.ts";
-import { getPrisma } from "../src/db/prisma.ts";
+import authRouter from "../src/routes/auth";
+import medicosRouter from "../src/routes/medicos";
+import horariosRouter from "../src/routes/horarios";
+import agendamentosRouter from "../src/routes/agendamentos";
+import { getPrisma } from "../src/db/prisma";
 
 const app = express();
 
