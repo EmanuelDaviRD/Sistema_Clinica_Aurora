@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
-import { getPrisma } from '../db/prisma';
-import { authMiddleware, AuthenticatedRequest } from '../middleware/authMiddleware';
-import { supabase } from '../lib/supabaseClient';
+import { getPrisma } from '../db/prisma.js';
+import { authMiddleware, AuthenticatedRequest } from '../middleware/authMiddleware.js';
+import { supabase } from '../lib/supabaseClient.js';
 
 const router = Router();
 

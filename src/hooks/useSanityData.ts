@@ -46,38 +46,13 @@ export function useSanityData() {
       try {
         setLoading(true);
         
-        // 1. Consulta GROQ de Médicos/Especialistas
-        const rawDoctors = await sanityClient.fetch(`*[_type == "medico"]{
-          _id,
-          name,
-          role,
-          category,
-          crm,
-          photo,
-          details,
-          whatsappMsg
-        }`);
-
-        // 2. Consulta GROQ de Serviços/Exames
-        const rawServices = await sanityClient.fetch(`*[_type == "servico"]{
-          _id,
-          name,
-          shortDescription,
-          category,
-          iconImage,
-          price
-        }`);
-
-        // 3. Consulta de Configurações Globais da Clínica (Pega a primeira e única ocorrência)
-        const rawConfig = await sanityClient.fetch(`*[_type == "configuracoesClinica"][0]{
-          clinicName,
-          address,
-          whatsapp,
-          whatsappDisplay,
-          email,
-          openingHours,
-          instagramUrl
-        }`);
+        // Fetch by-passed since we now use PostgreSQL for dynamic data and Local For fallback
+        // const rawDoctors = await sanityClient.fetch(...)
+        // const rawServices = ...
+        // const rawConfig = ...
+        const rawDoctors: any[] = [];
+        const rawServices: any[] = [];
+        const rawConfig: any = null;
 
         if (!isMounted) return;
 

@@ -31,15 +31,7 @@ export const LoginAdmin: React.FC = () => {
         body: JSON.stringify({ email, password }),
       });
 
-      let data: any;
-      const contentType = response.headers.get('content-type') || '';
-
-      if (contentType.includes('application/json')) {
-        data = await response.json();
-      } else {
-        const text = await response.text();
-        data = { message: text };
-      }
+      const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.message || 'Falha na autenticação do administrador.');

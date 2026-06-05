@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { getPrisma } from '../db/prisma';
+import { getPrisma } from '../db/prisma.js';
 
 const router = Router();
 

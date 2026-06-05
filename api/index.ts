@@ -1,10 +1,10 @@
 import express from "express";
 import cors from "cors";
-import authRouter from "../src/routes/auth";
-import medicosRouter from "../src/routes/medicos";
-import horariosRouter from "../src/routes/horarios";
-import agendamentosRouter from "../src/routes/agendamentos";
-import { getPrisma } from "../src/db/prisma";
+import authRouter from "../src/routes/auth.js";
+import medicosRouter from "../src/routes/medicos.js";
+import horariosRouter from "../src/routes/horarios.js";
+import agendamentosRouter from "../src/routes/agendamentos.js";
+import { getPrisma } from "../src/db/prisma.js";
 
 const app = express();
 
@@ -67,5 +67,10 @@ app.use("/api/medicos", medicosRouter);
 app.use("/api/horarios", horariosRouter);
 app.use("/api/agendamentos", agendamentosRouter);
 
-// Exportar como default para o Vercel reconhecer como Serverless Function
+// Handler global de erros para evitar retorno de HTML no frontend
+app.use((err: any, req: any, res: any, next: any) => {
+  console.error("Express Error:", err);
+  res.status(500).json({ error: "Erro Interno", message: err.message });
+});
+
 export default app;

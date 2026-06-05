@@ -1,38 +1,22 @@
 import { PrismaClient } from '@prisma/client';
 
-let prismaInstance: PrismaClient | null = null;
+const databaseUrl = process.env.DATABASE_URL;
 
-const ensureSupabaseSslIfNeeded = (url: string) => {
-  if (url.includes('.supabase.co') && !url.includes('sslmode=')) {
-    if (url.includes('?')) {
-      return `${url}&sslmode=require`;
+if (!databaseUrl) {
+  console.warn("AVISO: a variável DATABASE_URL não foi definida.");
+}
+
+const prismaInstance = new PrismaClient({
+  datasources: {
+    db: {
+      url: databaseUrl || "postgresql://user:password@localhost:5432/clinic_db?schema=public"
     }
-    return `${url}?sslmode=require`;
   }
-  return url;
-};
+});
 
 /**
- * Retorna uma instância lazy-loaded do client do Prisma.
- * Previne falhas de inicialização estática se as variáveis de ambiente não estiverem prontas.
+ * Retorna uma instância do client do Prisma.
  */
 export function getPrisma(): PrismaClient {
-  if (!prismaInstance) {
-    let databaseUrl = process.env.DATABASE_URL;
-    
-    if (!databaseUrl) {
-      console.warn("AVISO: a variável DATABASE_URL não foi definida. Usando fallback para fins de compilação.");
-    } else {
-      databaseUrl = ensureSupabaseSslIfNeeded(databaseUrl);
-    }
-
-    prismaInstance = new PrismaClient({
-      datasources: {
-        db: {
-          url: databaseUrl || "postgresql://user:password@localhost:5432/clinic_db?schema=public"
-        }
-      }
-    });
-  }
   return prismaInstance;
 }
