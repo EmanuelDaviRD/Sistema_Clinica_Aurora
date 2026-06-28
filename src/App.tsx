@@ -874,13 +874,6 @@ export function LandingPage() {
             {/* Botão de Agendamento Rápido no Header */}
             <div className="hidden lg:flex items-center gap-x-4 xl:gap-x-6 shrink-0">
               <Link 
-                to="/admin/login"
-                className="text-white/70 hover:text-[#C5A880] text-[11px] xl:text-xs font-bold tracking-widest uppercase transition-colors flex items-center whitespace-nowrap gap-1.5 py-2 group"
-              >
-                <Lock className="w-3.5 h-3.5 text-[#C5A880] shrink-0 group-hover:scale-110 transition-transform" />
-                Painel Admin
-              </Link>
-              <Link 
                 to="/agendar"
                 className="bg-gradient-to-r from-[#C5A880] to-[#E3C9A6] text-[#0A2B2A] px-5 py-2.5 rounded-full text-[11px] xl:text-xs font-black shadow-md hover:shadow-lg hover:scale-[1.03] active:scale-95 transition-all text-center whitespace-nowrap"
               >
