@@ -11,12 +11,10 @@
  * @returns String contendo exclusivamente dígitos numéricos limpos
  */
 export const sanitizePhoneNumber = (phone: string): string => {
-  if (!phone) return '5588996248427'; // Fallback padrão Luna & Mendes
+  if (!phone) return '5588996248427';
   
-  // Limpa tudo que não for dígito numérico
   let sanitized = phone.replace(/\D/g, '');
   
-  // Garante que o DDI "55" (Brasil) esteja presente se o número tiver 10 ou 11 dígitos
   if (sanitized.length === 11 || sanitized.length === 10) {
     sanitized = `55${sanitized}`;
   }

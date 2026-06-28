@@ -1,11 +1,9 @@
-// Sanity Schema para Configurações Gerais da Clínica (Singleton) - Luna & Mendes
-// Caminho sugerido em seu projeto Sanity: schemas/configuracoesClinica.ts ou schemas/configuracoesClinica.js
 
 export default {
   name: 'configuracoesClinica',
   title: 'Configurações da Clínica',
   type: 'document',
-  // Ocultamos a opção de "criar novos registros" para que exista sempre um documento único de configuração (Singleton)
+ 
   __experimental_actions: ['update', 'publish'], 
   fields: [
     {

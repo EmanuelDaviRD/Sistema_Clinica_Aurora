@@ -1,5 +1,3 @@
-// Sanity Schema para Médicos/Especialistas - Luna & Mendes
-// Caminho sugerido em seu projeto Sanity: schemas/medico.ts ou schemas/medico.js
 
 export default {
   name: 'medico',

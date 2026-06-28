@@ -1,6 +1,6 @@
 import React, { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Shield, Lock, Mail, AlertCircle } from 'lucide-react';
+import { ArrowRight, Shield, Lock, Mail, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 interface LoginResponse {
   token: string;
@@ -14,6 +14,7 @@ export const LoginAdmin: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -104,14 +105,24 @@ export const LoginAdmin: React.FC = () => {
                 <Lock className="w-4 h-4" />
               </span>
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-slate-50/50 border border-slate-200 focus:border-[#0A2B2A] focus:bg-white text-slate-900 rounded-xl pl-10 pr-4 py-3 text-xs outline-none transition-all focus:ring-2 focus:ring-[#0A2B2A]/10"
+                className="w-full bg-slate-50/50 border border-slate-200 focus:border-[#0A2B2A] focus:bg-white text-slate-900 rounded-xl pl-10 pr-10 py-3 text-xs outline-none transition-all focus:ring-2 focus:ring-[#0A2B2A]/10"
                 id="admin-login-password"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-[#0A2B2A] transition-colors"
+                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                tabIndex={-1}
+                id="admin-login-toggle-password"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 
@@ -134,7 +145,7 @@ export const LoginAdmin: React.FC = () => {
 
         {/* Rodapé informativo */}
         <div className="mt-6 text-center border-t border-slate-100 pt-5">
-          <p className="text-[10px] text-slate-400 font-mono">Espaço Reabilitar • Conexão PostgreSQL Ativa</p>
+          <p className="text-[10px] text-slate-400 font-mono">Espaço Reabilitar</p>
           <button
             onClick={() => navigate('/')}
             className="text-[10px] font-bold text-[#0A2B2A]/70 hover:text-[#0A2B2A] underline transition-all mt-3 block mx-auto"
