@@ -42,7 +42,6 @@ import {
   Lock
 } from 'lucide-react';
 
-// Tipagem para os dados de agendamento fictício / integração
 interface AppointmentData {
   specialty: string;
   doctor: string;
@@ -56,16 +55,14 @@ interface AppointmentData {
 
 export function LandingPage() {
   const navigate = useNavigate();
-  // Estados de controle de menus e modais de agendamento
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [showAllDoctors, setShowAllDoctors] = useState(false);
-  const [dbMedicos, setDbMedicos] = useState<any[]>([]); // Médicos originários do PostgreSQL (Supabase)
+  const [dbMedicos, setDbMedicos] = useState<any[]>([]); 
   
-  // Estado do agendador multi-etapas
   const [bookingStep, setBookingStep] = useState(1);
   const [appointment, setAppointment] = useState<AppointmentData>({
     specialty: '',
@@ -81,24 +78,21 @@ export function LandingPage() {
   const [isSessionExpired, setIsSessionExpired] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // DEFESAS DE BORDA E ABUSO (ETAPA 4)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitHistory, setSubmitHistory] = useState<number[]>([]);
   const [rateLimited, setRateLimited] = useState(false);
   const [idempotencyKey, setIdempotencyKey] = useState(() => Math.random().toString(36).substring(2, 11) + '-' + Date.now());
 
-  // Limpa o estado temporário do rate limit caso fique ocioso
   useEffect(() => {
     if (rateLimited) {
       const timer = setTimeout(() => {
         setRateLimited(false);
         setValidationError(null);
-      }, 60000); // Libera após 60 segundos
+      }, 60000); 
       return () => clearTimeout(timer);
     }
   }, [rateLimited]);
 
-  // Carrega médicos dinâmicamente do banco PostgreSQL via API REST no mount
   useEffect(() => {
     let isMounted = true;
     const loadMedicosFromDB = async () => {
@@ -118,18 +112,16 @@ export function LandingPage() {
     return () => { isMounted = false; };
   }, []);
 
-  // Função para reiniciar o timer de inatividade (5 minutos)
   const resetInactivityTimer = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
     
-    // Configura expiração de 5 minutos (300.000 ms) para proteger dados privados de pacientes
     timeoutRef.current = setTimeout(() => {
       if (isBookingModalOpen && (appointment.patientName || appointment.phone || appointment.specialty)) {
         handleSessionTimeout();
       }
-    }, 300000); // 5 minutos
+    }, 300000); 
   };
 
   const handleSessionTimeout = () => {
@@ -148,7 +140,6 @@ export function LandingPage() {
     setIsSessionExpired(true);
   };
 
-  // Monitora interações quando o modal de agendamento está ativo para redefinir o temporizador
   useEffect(() => {
     if (isBookingModalOpen) {
       resetInactivityTimer();
@@ -175,16 +166,12 @@ export function LandingPage() {
     }
   }, [isBookingModalOpen, appointment]);
 
-  // CONTROLE DE ACESSO DE ESTADO & PREVENÇÃO DE DESVIOS (ETAPA 3)
-  // Bloqueia e reverte qualquer estado de progresso de agendamento que desvie dos pré-requisitos lógicos.
   useEffect(() => {
     if (!isBookingModalOpen) {
       if (bookingStep !== 1) setBookingStep(1);
       return;
     }
 
-    // Regra para Passo 2 (Informações Pessoais do Paciente)
-    // Exige obrigatoriamente Especialidade, Data válida e Período preenchidos
     if (bookingStep === 2) {
       if (!appointment.specialty || !appointment.date || !appointment.time) {
         setBookingStep(1);
@@ -192,8 +179,6 @@ export function LandingPage() {
       }
     }
 
-    // Regra para Passo 3 (Confirmação e Envio)
-    // Exige obrigatoriamente Nome e Telefone válidos além dos dados do Passo 2
     if (bookingStep === 3) {
       if (!appointment.specialty || !appointment.date || !appointment.time || !appointment.patientName || !appointment.phone) {
         setBookingStep(1);
@@ -202,7 +187,6 @@ export function LandingPage() {
     }
   }, [bookingStep, isBookingModalOpen, appointment]);
 
-  // Lista Real de Pacotes de Check-up da Clínica Luna & Mendes (Extraído do Perfil)
   const checkups = [
     {
       id: 'checkup-completo',
@@ -279,7 +263,6 @@ export function LandingPage() {
     }
   ];
 
-  // Lista Real de Especialistas do Corpo Clínico da Clínica Luna & Mendes (Extraído do Perfil)
   const doctors = [
     {
       id: 'dr-henrique-feitosa',
@@ -652,10 +635,8 @@ export function LandingPage() {
     }
   ];
 
-  // Gancho de Integração com o Sanity.io (Médicos, Serviços e Configs Dinâmicos!)
   const { doctors: sanityDoctors, services: sanityServices, config: sanityConfig } = useSanityData();
 
-  // Mapeia e consolida os dados de Contato, Endereço e Funcionamento dinamicamente com Fallbacks robustos
   const centralWhatsApp = sanityConfig?.whatsapp || '5588996248427';
   const centralWhatsAppDisplay = sanityConfig?.whatsappDisplay || '(88) 99624-8427';
   const centralEmail = sanityConfig?.email || 'contato@lunaemendes.com.br';
@@ -663,15 +644,10 @@ export function LandingPage() {
   const centralOpeningHours = sanityConfig?.openingHours || 'Segunda a Sexta: 07h às 18h | Sábado: 07h às 12h';
   const centralInstagram = sanityConfig?.instagramUrl || 'https://instagram.com/lunaemendes';
 
-  // Consolidação dinâmica do Corpo Técnico (Prisma/PostgreSQL prioritário + Fallbacks do Sanity/Local)
   const finalDoctors = useMemo(() => {
-    // Lista base de médicos (Sanity se houver, senão local)
     const baseList = sanityDoctors.length > 0 ? sanityDoctors : doctors;
-
-    // Se houver registros populados no banco PostgreSQL (Supabase) via API /api/medicos
     if (dbMedicos && dbMedicos.length > 0) {
       return dbMedicos.map((dbMed: any) => {
-        // Tenta associar com nosso banco de especialistas local pelo nome do médico
         const localMatch = baseList.find(
           (loc) => loc.name.toLowerCase().trim() === dbMed.nome.toLowerCase().trim()
         );
@@ -682,7 +658,7 @@ export function LandingPage() {
           role: dbMed.especialidade,
           category: localMatch?.category || 'Medicina',
           crm: localMatch?.crm || 'CRM Ativo',
-          photoUrl: (dbMed.foto_url && !dbMed.foto_url.startsWith('COLE_AQUI_')) ? dbMed.foto_url : (localMatch?.photoUrl || ''), // Ignora os placeholders de seed e usa recurso estático ou vazio
+          photoUrl: (dbMed.foto_url && !dbMed.foto_url.startsWith('COLE_AQUI_')) ? dbMed.foto_url : (localMatch?.photoUrl || ''), 
           details: localMatch?.details || [
             'Atendimento integral e personalizado',
             'Acompanhamento e suporte continuado',
@@ -696,8 +672,6 @@ export function LandingPage() {
     return baseList;
   }, [sanityDoctors, dbMedicos]);
 
-  // SANITIZAÇÃO DE ENTRADA, PREVENÇÃO DE XSS E INJEÇÃO (ETAPA 2)
-  // Remove marcas de tags HTML/XML ou injeção de scripts maliciosos e limita caracteres
   const sanitizeText = (input: string, limitLength: number = 80): string => {
     if (!input) return '';
     let clean = input.replace(/<[^>]*>?/gm, '');
@@ -705,14 +679,12 @@ export function LandingPage() {
     return clean.slice(0, limitLength).trim();
   };
 
-  // Filtra a entrada de pesquisa para evitar caracteres perigosos de negação de serviço algorítmico, XSS ou injeção
   const sanitizeSearchTerm = (input: string): string => {
     if (!input) return '';
     let clean = input.replace(/[^a-zA-Z0-9áéíóúâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ\s.,()/-]/g, '');
     return clean.slice(0, 40);
   };
 
-  // Sanitiza e formata o número do celular de forma estrita para evitar injeção e phone spoofing
   const sanitizePhoneNumber = (input: string): string => {
     if (!input) return '';
     let clean = input.replace(/[^0-9()\s+-]/g, '');
@@ -725,20 +697,15 @@ export function LandingPage() {
     return new Date().toISOString().split('T')[0];
   }, []);
 
-  // Copiar endereço, PIX ou contatos para área de transferência
   const handleCopyText = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  // Enviar agendamento e avançar com validação estrita (ETAPA 2/4)
   const handleBookingSubmit = (e: FormEvent) => {
     e.preventDefault();
     setValidationError(null);
-
-    // 0. Rate Limiting de Borda no Cliente (ETAPA 4)
-    // Protege contra ataques de flood, força bruta e abuso de agendamentos automatizados
     const now = Date.now();
     const recentSubmits = submitHistory.filter(timestamp => now - timestamp < 60000);
     
@@ -748,41 +715,34 @@ export function LandingPage() {
       return;
     }
 
-    if (isSubmitting) return; // Trava contra duplo clique concorrente
+    if (isSubmitting) return;
 
-    // Validação estrita de cada dado inserido pelo usuário
     const cleanName = sanitizeText(appointment.patientName, 60);
     const cleanPhone = sanitizePhoneNumber(appointment.phone);
     const cleanSpecialty = sanitizeText(appointment.specialty, 40);
     const cleanTime = sanitizeText(appointment.time, 30);
 
-    // 1. Validar Nome
     if (!cleanName || cleanName.length < 3) {
       setValidationError('Por favor, informe o nome completo do paciente contendo ao menos 3 caracteres.');
       return;
     }
 
-    // 2. Validar Telefone / WhatsApp
     const digitsOnly = cleanPhone.replace(/\D/g, '');
     if (digitsOnly.length < 10 || digitsOnly.length > 15) {
       setValidationError('O número de WhatsApp informado é inválido. Digite um número real com DDD (ex: 88996248427).');
       return;
     }
 
-    // 3. Validar Especialidade/Serviço
     const validSpecialties = ['Análises Clínicas', 'Cardiologia', 'Ginecologia', 'Urologia', 'Reabilitação'];
     if (!cleanSpecialty || !validSpecialties.includes(cleanSpecialty)) {
       setValidationError('Área de interesse ou procedimento inválido.');
       return;
     }
 
-    // 4. Validar Data (Prevenir agendamentos retroativos)
     if (!appointment.date || appointment.date < todayStr) {
       setValidationError('Selecione uma data de agendamento válida (hoje ou no futuro).');
       return;
     }
-
-    // 5. Validar Período
     const validTimes = ['Manhã (07h às 12h)', 'Tarde (13h às 18h)', 'Manhã', 'Tarde'];
     const matchesTime = validTimes.some(t => cleanTime.includes(t) || t.includes(cleanTime));
     if (!cleanTime || !matchesTime) {
@@ -790,11 +750,9 @@ export function LandingPage() {
       return;
     }
 
-    // Inicia a transação garantindo a idempotência e simulando envio por rede ao servidor de forma segura
     setIsSubmitting(true);
 
     setTimeout(() => {
-      // Atualiza o estado com os dados sanitizados e validados para renderização segura
       setAppointment({
         ...appointment,
         patientName: cleanName,
@@ -803,14 +761,12 @@ export function LandingPage() {
         time: cleanTime
       });
 
-      // Registra timestamp do envio no histórico para controle de requisições por minuto
       setSubmitHistory(prev => [...prev, now]);
       setIsSubmitting(false);
-      setBookingStep(3); // Mostra sucesso com dados blindados
-    }, 1200); // 1.2s de latência simulada de transmissão segura criptografada
+      setBookingStep(3);
+    }, 1200);
   };
 
-  // Reiniciar agendamento
   const resetBooking = () => {
     setAppointment({
       specialty: '',
@@ -827,11 +783,9 @@ export function LandingPage() {
     setIsSessionExpired(false);
     setValidationError(null);
     setIsSubmitting(false);
-    // Regenera a chave de idempotência para o próximo agendamento
     setIdempotencyKey(Math.random().toString(36).substring(2, 11) + '-' + Date.now());
   };
 
-  // Filtragem dinâmica inteligente baseada no termo de busca (pesquisa por nome, especialidade, procedimentos ou checkups)
   const filteredOutput = useMemo(() => {
     if (!searchTerm) return { doctors: [], checkups: [], hasMatches: false };
 
@@ -2393,8 +2347,6 @@ export function LandingPage() {
               </a>
               <span>•</span>
               <a href="#localizacao" className="hover:text-white">Aurora-CE</a>
-              <span>•</span>
-              <Link to="/admin/login" className="hover:text-amber-400 font-semibold text-amber-500">Painel Administrativo</Link>
             </div>
           </div>
 
