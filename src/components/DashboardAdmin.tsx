@@ -4,6 +4,7 @@ import {
   Users, Calendar, Clock, LogOut, Plus, Trash2, 
   User, Shield, Activity, RefreshCw, AlertCircle, CheckCircle, Stethoscope
 } from 'lucide-react';
+import { ConfirmModal } from './ConfirmModal';
 
 interface Medico {
   id: number;
@@ -69,6 +70,31 @@ export const DashboardAdmin: React.FC = () => {
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
   const [mensagemErro, setMensagemErro] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'agendamentos' | 'medicos' | 'horarios'>('agendamentos');
+
+  // Estado do modal de confirmação customizado
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmLabel: string;
+    variant: 'danger' | 'warning' | 'info';
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmLabel: 'Confirmar',
+    variant: 'danger',
+    onConfirm: () => {},
+  });
+
+  const openConfirmModal = (config: Omit<typeof confirmModal, 'isOpen'>) => {
+    setConfirmModal({ ...config, isOpen: true });
+  };
+
+  const closeConfirmModal = () => {
+    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+  };
 
   // Verifica Sessão de Token JWT
   useEffect(() => {
@@ -175,25 +201,32 @@ export const DashboardAdmin: React.FC = () => {
     }
   };
 
-  const handleExcluirMedico = async (id: number) => {
-    if (!window.confirm('Tem certeza? Isso removerá o médico e TODOS os horários/consultas estruturadas dele.')) return;
+  const handleExcluirMedico = (id: number) => {
+    openConfirmModal({
+      title: 'Excluir Profissional',
+      message: 'Tem certeza? Isso removerá o médico e TODOS os horários e consultas estruturadas dele. Esta ação não pode ser desfeita.',
+      confirmLabel: 'Sim, Excluir Médico',
+      variant: 'danger',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          const response = await fetch(`/api/medicos/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
 
-    try {
-      const response = await fetch(`/api/medicos/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Erro ao excluir.');
+          }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao excluir.');
-      }
-
-      triggerFeedback('Médico e seus horários foram excluídos.');
-      fetchDatabaseData(token!);
-    } catch (err: any) {
-      setMensagemErro(err.message);
-    }
+          triggerFeedback('Médico e seus horários foram excluídos.');
+          fetchDatabaseData(token!);
+        } catch (err: any) {
+          setMensagemErro(err.message);
+        }
+      },
+    });
   };
 
   // Ações de Horários
@@ -227,47 +260,61 @@ export const DashboardAdmin: React.FC = () => {
     }
   };
 
-  const handleExcluirHorario = async (id: number) => {
-    if (!window.confirm('Excluir este horário?')) return;
+  const handleExcluirHorario = (id: number) => {
+    openConfirmModal({
+      title: 'Excluir Horário',
+      message: 'Deseja realmente excluir este horário da grade? Se houver um agendamento vinculado, ele também será removido.',
+      confirmLabel: 'Sim, Excluir Horário',
+      variant: 'warning',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          const response = await fetch(`/api/horarios/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
 
-    try {
-      const response = await fetch(`/api/horarios/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Erro ao excluir.');
+          }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao excluir.');
-      }
-
-      triggerFeedback('Horário excluído com sucesso.');
-      fetchDatabaseData(token!);
-    } catch (err: any) {
-      setMensagemErro(err.message);
-    }
+          triggerFeedback('Horário excluído com sucesso.');
+          fetchDatabaseData(token!);
+        } catch (err: any) {
+          setMensagemErro(err.message);
+        }
+      },
+    });
   };
 
   // Ações de Agendamentos
-  const handleCancelarAgendamento = async (id: number) => {
-    if (!window.confirm('Deseja realmente CANCELAR esta consulta? Isso liberará o horário correspondente.')) return;
+  const handleCancelarAgendamento = (id: number) => {
+    openConfirmModal({
+      title: 'Cancelar Consulta',
+      message: 'Deseja realmente cancelar esta consulta? O horário correspondente será liberado e ficará disponível para outros pacientes.',
+      confirmLabel: 'Sim, Cancelar Consulta',
+      variant: 'danger',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          const response = await fetch(`/api/agendamentos/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
 
-    try {
-      const response = await fetch(`/api/agendamentos/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Falha ao cancelar consulta.');
+          }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Falha ao cancelar consulta.');
-      }
-
-      triggerFeedback('Agendamento cancelado. O horário correspondente agora está disponível para outros pacientes.');
-      fetchDatabaseData(token!);
-    } catch (err: any) {
-      setMensagemErro(err.message);
-    }
+          triggerFeedback('Agendamento cancelado. O horário correspondente agora está disponível para outros pacientes.');
+          fetchDatabaseData(token!);
+        } catch (err: any) {
+          setMensagemErro(err.message);
+        }
+      },
+    });
   };
 
   // Helper para feedback dinâmico temporário
@@ -672,6 +719,17 @@ export const DashboardAdmin: React.FC = () => {
         )}
 
       </main>
+
+      {/* Modal de Confirmação Customizado */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmLabel={confirmModal.confirmLabel}
+        variant={confirmModal.variant}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={closeConfirmModal}
+      />
     </div>
   );
 };
