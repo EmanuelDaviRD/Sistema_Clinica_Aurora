@@ -16,22 +16,39 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.get('/', async (req: Request, res: Response) => {
   try {
     const prisma = getPrisma();
-    const medicos = await prisma.medico.findMany({
-      select: {
-        id: true,
-        nome: true,
-        especialidade: true,
-        foto_url: true,
-        imageFit: true,
-        imagePosition: true,
-        imageScale: true,
-        imageOffsetX: true,
-        imageOffsetY: true,
-        _count: {
-          select: { horarios: { where: { status_disponivel: true } } }
+    let medicos;
+    try {
+      medicos = await prisma.medico.findMany({
+        select: {
+          id: true,
+          nome: true,
+          especialidade: true,
+          foto_url: true,
+          imageFit: true,
+          imagePosition: true,
+          imageScale: true,
+          imageOffsetX: true,
+          imageOffsetY: true,
+          _count: {
+            select: { horarios: { where: { status_disponivel: true } } }
+          }
         }
-      }
-    });
+      });
+    } catch (e: any) {
+      // Fallback in case columns don't exist yet (migration pending)
+      console.warn("New image columns not found in database, falling back to old schema query.", e.message);
+      medicos = await prisma.medico.findMany({
+        select: {
+          id: true,
+          nome: true,
+          especialidade: true,
+          foto_url: true,
+          _count: {
+            select: { horarios: { where: { status_disponivel: true } } }
+          }
+        }
+      });
+    }
     return res.json(medicos);
   } catch (error: any) {
     console.error('Erro ao listar médicos:', error);

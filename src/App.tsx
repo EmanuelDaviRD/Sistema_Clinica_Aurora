@@ -664,7 +664,7 @@ export function LandingPage() {
   const centralWhatsAppDisplay = sanityConfig?.whatsappDisplay || '(88) 99624-8427';
   const centralEmail = sanityConfig?.email || 'contato@lunaemendes.com.br';
   const centralAddress = sanityConfig?.address || 'Av. Antônio Ricardo, 29, Centro, Aurora - CE, 63360-000';
-  const centralOpeningHours = sanityConfig?.openingHours || 'Segunda a Sexta: 07h às 18h | Sábado: 07h às 12h';
+  const centralOpeningHours = sanityConfig?.openingHours || 'Segunda a Sexta: 06h30 às 17h | Sábado e Domingo: 07h às 11h';
   const centralInstagram = sanityConfig?.instagramUrl || 'https://instagram.com/lunaemendes';
 
   const finalDoctors = useMemo(() => {
