@@ -10,10 +10,6 @@ export interface AuthenticatedRequest extends Request {
   user?: AuthenticatedUser;
 }
 
-/**
- * Middleware para reter e autenticar requisições usando JWT.
- * Valida o cabeçalho Authorization do tipo 'Bearer <token>'.
- */
 export const authMiddleware = (
   req: AuthenticatedRequest,
   res: Response,

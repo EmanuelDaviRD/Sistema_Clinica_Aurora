@@ -245,6 +245,29 @@ export function LandingPage() {
       ]
     },
     {
+      id: 'checkup-masculino',
+      name: 'Check-up Masculino',
+      price: 'R$ 135,90',
+      subtitle: 'Prevenção e acompanhamento completo de saúde do homem',
+      tag: 'Masculino',
+      exams: [
+        'PSA Total',
+        'PSA Livre',
+        'Hemograma Completo',
+        'Homoglobina Glicada',
+        'Creatinina',
+        'Ureia',
+        'Colesterol Total',
+        'Colesterol HDL',
+        'Colesterol LDL',
+        'Colesterol VLDL',
+        'Triglicerídeos',
+        'Sódio',
+        'Potássio',
+        'Sumário de Urina'
+      ]
+    },
+    {
       id: 'checkup-folia',
       name: 'Check-up Pré/Pós Festas',
       price: 'R$ 149,99',
@@ -955,7 +978,7 @@ export function LandingPage() {
               </h1>
 
               <p className="text-slate-300 text-base md:text-lg max-w-2xl leading-relaxed">
-                A <strong>Luna & Mendes</strong> é uma clínica multiprofissional moderna, integrando exames laboratoriais, especialidades médicas e o conceituado <strong>Espaço Reabilitar</strong> com terapias integradas de alta performance no Cariri Cearense.
+                A <strong>Luna & Mendes - Saúde e Diagnóstico</strong> é uma clínica comprometida com a promoção da saúde e do bem-estar, oferecendo atendimento humanizado, serviços de qualidade e uma estrutura preparada para cuidar de você e da sua família. Contamos com uma equipe de profissionais qualificados e disponibilizamos consultas especializadas, exames diagnósticos, análises laboratoriais, terapias integradas e reabilitação, sempre com ética, segurança e agilidade. Nosso compromisso é proporcionar um atendimento acolhedor e de excelência, contribuindo para uma melhor qualidade de vida da população de Aurora e região.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 pt-4" id="hero-actions">
@@ -1018,19 +1041,19 @@ export function LandingPage() {
                       <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-[#C5A880]">
                         <Check className="w-4 h-4" />
                       </div>
-                      <span className="text-xs">Laboratório de Análises Clínicas Clínico-Químicas</span>
+                      <span className="text-xs">Laboratório de Análises Clínicas</span>
                     </div>
                     <div className="flex items-center space-x-3 text-slate-200">
                       <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-[#C5A880]">
                         <Check className="w-4 h-4" />
                       </div>
-                      <span className="text-xs">Cardiologia, Ginecologia, Psiquiatria & Neurologia</span>
+                      <span className="text-xs">Consutas Médicas especializadas </span>
                     </div>
                     <div className="flex items-center space-x-3 text-slate-200">
                       <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-[#C5A880]">
                         <Check className="w-4 h-4" />
                       </div>
-                      <span className="text-xs">Espaço Reabilitar: Terapias ABA, Psico e Fono</span>
+                      <span className="text-xs">Espaço Reabilitar: Terapias e Reabilitação</span>
                     </div>
                   </div>
 
@@ -1117,22 +1140,26 @@ export function LandingPage() {
                       <span className="bg-[#FAF8F5] border border-[#C5A880]/30 text-[#AF926B] text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">Check-ups</span>
                     </div>
                     <p className="text-slate-500 text-xs leading-relaxed">
-                      Painel laboratorial certificado para exames de rotina, rastreamento preventivo feminino, infantil e coletas facilitadas na região de Aurora.
+                      Painel laboratorial certificado para exames de rotina, rastreamento preventivo feminino, infantil e coletas facilitadas em Aurora e região.
                     </p>
                   </div>
 
                   <div className="pt-4 border-t border-slate-100 space-y-2.5">
                     <div className="flex items-center text-xs text-slate-600 font-medium">
                       <Check className="w-4 h-4 text-[#C5A880] mr-2 flex-shrink-0" />
-                      <span>Check-up Completo com 11+ exames</span>
+                      <span>Check-up</span>
                     </div>
                     <div className="flex items-center text-xs text-slate-600 font-medium">
                       <Check className="w-4 h-4 text-[#C5A880] mr-2 flex-shrink-0" />
-                      <span>Rastreamento Preventivo Feminino</span>
+                      <span>Rastreamento Preventivo</span>  
                     </div>
                     <div className="flex items-center text-xs text-slate-600 font-medium">
                       <Check className="w-4 h-4 text-[#C5A880] mr-2 flex-shrink-0" />
-                      <span>Entrega ágil e consulta de laudo online</span>
+                      <span>Exames de Imagem</span>
+                    </div>
+                    <div className="flex items-center text-xs text-slate-600 font-medium">
+                      <Check className="w-4 h-4 text-[#C5A880] mr-2 flex-shrink-0" />
+                      <span>Resultados com Agilidade</span>
                     </div>
                   </div>
                 </div>
@@ -1164,22 +1191,22 @@ export function LandingPage() {
                       <span className="bg-[#FAF8F5] border border-[#C5A880]/30 text-[#AF926B] text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">Especialistas</span>
                     </div>
                     <p className="text-slate-500 text-xs leading-relaxed">
-                      Corpo clínico composto por médicos cardiologista, ginecologista, urologista, psiquiatra, dermatologista e clínico integrativo de alta expertise.
+                      Corpo clínico composto por médicos especilizados  e equipe multiprofissional em diversas áreas clínicas integrativo de alta expertise.
                     </p>
                   </div>
 
                   <div className="pt-4 border-t border-slate-100 space-y-2.5">
                     <div className="flex items-center text-xs text-slate-600 font-medium">
                       <Check className="w-4 h-4 text-[#C5A880] mr-2 flex-shrink-0" />
-                      <span>Cardiologista especialista (Dr. Henrique)</span>
+                      <span>Consultas Médicas Especializadas</span>
                     </div>
                     <div className="flex items-center text-xs text-slate-600 font-medium">
                       <Check className="w-4 h-4 text-[#C5A880] mr-2 flex-shrink-0" />
-                      <span>Ginecologia & Inserção de DIU/Implanon</span>
+                      <span>Equipe Multiprofissional</span>
                     </div>
                     <div className="flex items-center text-xs text-slate-600 font-medium">
                       <Check className="w-4 h-4 text-[#C5A880] mr-2 flex-shrink-0" />
-                      <span>Urologia avançada & Diagnóstico por Imagem</span>
+                      <span>Atendimento Ético e Humanizado</span>
                     </div>
                   </div>
                 </div>
@@ -1211,22 +1238,22 @@ export function LandingPage() {
                       <span className="bg-[#FAF8F5] border border-[#C5A880]/30 text-[#AF926B] text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">Terapias ABA</span>
                     </div>
                     <p className="text-slate-500 text-xs leading-relaxed">
-                      Espaço dedicado à reabilitação especializado no espetro autista (TEA) e TDAH com Fonoaudiologia, Fisioterapia, Psicopedagogia e Psicologia.
+                      Espaço dedicado para terapias e reabilitação oferencendo cuidado integral e baseado em evidencias.
                     </p>
-                  </div>
+                  </div> 
 
                   <div className="pt-4 border-t border-slate-100 space-y-2.5">
                     <div className="flex items-center text-xs text-slate-600 font-medium">
                       <Check className="w-4 h-4 text-[#C5A880] mr-2 flex-shrink-0" />
-                      <span>Método ABA Clínico estruturado</span>
+                      <span>Reabilitação e Desenvolvimento humano</span>
                     </div>
                     <div className="flex items-center text-xs text-slate-600 font-medium">
                       <Check className="w-4 h-4 text-[#C5A880] mr-2 flex-shrink-0" />
-                      <span>Fonoaudiologia focado em comunicação</span>
+                      <span>Cuidado Individualizado</span>
                     </div>
                     <div className="flex items-center text-xs text-slate-600 font-medium">
                       <Check className="w-4 h-4 text-[#C5A880] mr-2 flex-shrink-0" />
-                      <span>Atendimento Psicoprofissional de excelência</span>
+                      <span>Equipe Qualificada atuando de forma integrada</span>
                     </div>
                   </div>
                 </div>

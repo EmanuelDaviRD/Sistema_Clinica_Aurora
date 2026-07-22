@@ -66,12 +66,10 @@ export const DashboardAdmin: React.FC = () => {
   const [novoHorarioData, setNovoHorarioData] = useState('');
   const [novoHorarioMedico, setNovoHorarioMedico] = useState('');
 
-  // Estados de feedback visual
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
   const [mensagemErro, setMensagemErro] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'agendamentos' | 'medicos' | 'horarios'>('agendamentos');
 
-  // Estado do modal de confirmação customizado
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -229,7 +227,6 @@ export const DashboardAdmin: React.FC = () => {
     });
   };
 
-  // Ações de Horários
   const handleCriarHorario = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!novoHorarioData || !novoHorarioMedico) return;

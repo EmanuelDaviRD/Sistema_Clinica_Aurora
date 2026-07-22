@@ -7,10 +7,6 @@ interface WhatsAppFloatingButtonProps {
   assistantName?: string;
 }
 
-/**
- * Componente de Alta Conversão (CRO): Botão Flutuante Permanente do WhatsApp
- * Posicionado no canto inferior direito, com micro-interações de atenção e dica visual.
- */
 export const WhatsAppFloatingButton: React.FC<WhatsAppFloatingButtonProps> = ({
   phone,
   defaultMessage = 'Olá! Estava navegando no site da clínica e gostaria de agendar uma consulta.',

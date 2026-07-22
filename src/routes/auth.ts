@@ -5,10 +5,6 @@ import { getPrisma } from '../db/prisma.js';
 
 const router = Router();
 
-/**
- * POST /api/login
- * Valida credenciais do administrador no PostgreSQL e emite o token JWT
- */
 router.post('/login', async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
@@ -55,10 +51,6 @@ router.post('/login', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * POST /api/seed-admin
- * Rota auxiliar segura para criar o primeiro administrador do sistema
- */
 router.post('/seed-admin', async (req: Request, res: Response) => {
   const { email, password } = req.body;
 

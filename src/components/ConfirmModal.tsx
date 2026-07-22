@@ -24,7 +24,6 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 }) => {
   const cancelRef = useRef<HTMLButtonElement>(null);
 
-  // Foca no botão cancelar ao abrir e trava scroll do body
   useEffect(() => {
     if (isOpen) {
       cancelRef.current?.focus();
@@ -37,7 +36,6 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     };
   }, [isOpen]);
 
-  // Fecha com Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
