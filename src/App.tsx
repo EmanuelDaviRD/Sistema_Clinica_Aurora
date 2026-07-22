@@ -2327,7 +2327,7 @@ export function LandingPage() {
               <ul className="space-y-2.5 text-xs">
                 <li className="flex items-start space-x-2">
                   <Phone className="w-4 h-4 text-[#C5A880] flex-shrink-0" />
-                  <span>Central: (88) 99624-8427</span>
+                  <span>Central: (88) 98818-5045</span>
                 </li>
                 <li className="flex items-start space-x-2">
                   <MessageCircle className="w-4 h-4 text-[#C5A880] flex-shrink-0" />
