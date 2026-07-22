@@ -934,8 +934,8 @@ export const DashboardAdmin: React.FC = () => {
                         className="w-full h-full filter contrast-[1.03] brightness-[1.01] saturate-[0.92] sepia-[0.04]" 
                         style={{
                           objectFit: (editingMedico.imageFit as any) || 'cover',
-                          objectPosition: (editingMedico.imagePosition as any) || 'top',
-                          transform: `scale(${(editingMedico.imageScale || 100) / 100}) translate(${editingMedico.imageOffsetX || 0}px, ${editingMedico.imageOffsetY || 0}px)`
+                          objectPosition: `calc(${editingMedico.imagePosition?.includes('left') ? '0%' : editingMedico.imagePosition?.includes('right') ? '100%' : '50%'} + ${editingMedico.imageOffsetX || 0}px) calc(${editingMedico.imagePosition?.includes('top') ? '0%' : editingMedico.imagePosition?.includes('bottom') ? '100%' : '50%'} + ${editingMedico.imageOffsetY || 0}px)`,
+                          transform: `scale(${(editingMedico.imageScale || 100) / 100})`
                         }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#0A2B2A]/40 via-transparent to-transparent pointer-events-none" />

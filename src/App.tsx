@@ -1721,8 +1721,8 @@ export function LandingPage() {
                         className="w-full h-full filter contrast-[1.03] brightness-[1.01] saturate-[0.92] sepia-[0.04]" 
                         style={{
                           objectFit: doc.imageFit || 'cover',
-                          objectPosition: doc.imagePosition || 'top',
-                          transform: `scale(${(doc.imageScale || 100) / 100}) translate(${doc.imageOffsetX || 0}px, ${doc.imageOffsetY || 0}px)`
+                          objectPosition: `calc(${doc.imagePosition?.includes('left') ? '0%' : doc.imagePosition?.includes('right') ? '100%' : '50%'} + ${doc.imageOffsetX || 0}px) calc(${doc.imagePosition?.includes('top') ? '0%' : doc.imagePosition?.includes('bottom') ? '100%' : '50%'} + ${doc.imageOffsetY || 0}px)`,
+                          transform: `scale(${(doc.imageScale || 100) / 100})`
                         }}
                         referrerPolicy="no-referrer"
                         onError={(e) => {
