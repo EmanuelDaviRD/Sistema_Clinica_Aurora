@@ -213,6 +213,16 @@ export const DashboardAdmin: React.FC = () => {
     if (!editingMedico) return;
     setIsSavingEdit(true);
     try {
+      const cleanUrl = editingMedico.foto_url ? editingMedico.foto_url.split('#imgcfg=')[0] : '';
+      const configObj = {
+        imageFit: editingMedico.imageFit,
+        imagePosition: editingMedico.imagePosition,
+        imageScale: editingMedico.imageScale,
+        imageOffsetX: editingMedico.imageOffsetX,
+        imageOffsetY: editingMedico.imageOffsetY
+      };
+      const newFotoUrl = cleanUrl ? `${cleanUrl}#imgcfg=${encodeURIComponent(JSON.stringify(configObj))}` : '';
+
       const response = await fetch(`/api/medicos/${editingMedico.id}`, {
         method: 'PUT',
         headers: {
@@ -222,12 +232,7 @@ export const DashboardAdmin: React.FC = () => {
         body: JSON.stringify({
           nome: editingMedico.nome,
           especialidade: editingMedico.especialidade,
-          foto_url: editingMedico.foto_url,
-          imageFit: editingMedico.imageFit,
-          imagePosition: editingMedico.imagePosition,
-          imageScale: editingMedico.imageScale,
-          imageOffsetX: editingMedico.imageOffsetX,
-          imageOffsetY: editingMedico.imageOffsetY
+          foto_url: newFotoUrl
         })
       });
 
@@ -558,7 +563,7 @@ export const DashboardAdmin: React.FC = () => {
                         <div key={med.id} className="border border-slate-100 rounded-xl p-4 flex items-center space-x-3 hover:shadow-md transition-all relative group bg-slate-55/10">
                           {med.foto_url ? (
                             <img 
-                              src={med.foto_url} 
+                              src={med.foto_url.split('#')[0]} 
                               alt={med.nome} 
                               className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-[#C5A880]/20"
                               referrerPolicy="no-referrer"
@@ -578,14 +583,23 @@ export const DashboardAdmin: React.FC = () => {
 
                           <div className="absolute top-4 right-4 flex space-x-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all bg-white/80 p-1 rounded-lg backdrop-blur-sm shadow-sm border border-slate-100">
                             <button
-                              onClick={() => setEditingMedico({
-                                ...med,
-                                imageFit: med.imageFit || 'cover',
-                                imagePosition: med.imagePosition || 'top',
-                                imageScale: med.imageScale ?? 100,
-                                imageOffsetX: med.imageOffsetX ?? 0,
-                                imageOffsetY: med.imageOffsetY ?? 0
-                              })}
+                              onClick={() => {
+                                let parsedConfig = { imageFit: 'cover', imagePosition: 'top', imageScale: 100, imageOffsetX: 0, imageOffsetY: 0 };
+                                if (med.foto_url && med.foto_url.includes('#imgcfg=')) {
+                                  try {
+                                    const configStr = med.foto_url.split('#imgcfg=')[1];
+                                    parsedConfig = { ...parsedConfig, ...JSON.parse(decodeURIComponent(configStr)) };
+                                  } catch(e) {}
+                                }
+                                setEditingMedico({
+                                  ...med,
+                                  imageFit: parsedConfig.imageFit,
+                                  imagePosition: parsedConfig.imagePosition,
+                                  imageScale: parsedConfig.imageScale,
+                                  imageOffsetX: parsedConfig.imageOffsetX,
+                                  imageOffsetY: parsedConfig.imageOffsetY
+                                });
+                              }}
                               className="text-slate-400 hover:text-emerald-600 p-1 rounded-md transition-all"
                               title="Configurar Imagem"
                             >
@@ -915,7 +929,7 @@ export const DashboardAdmin: React.FC = () => {
                   {editingMedico.foto_url ? (
                     <div className="w-full h-full overflow-hidden flex items-center justify-center">
                       <img 
-                        src={editingMedico.foto_url} 
+                        src={editingMedico.foto_url.split('#')[0]} 
                         alt={editingMedico.nome} 
                         className="w-full h-full filter contrast-[1.03] brightness-[1.01] saturate-[0.92] sepia-[0.04]" 
                         style={{

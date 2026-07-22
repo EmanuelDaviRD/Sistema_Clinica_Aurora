@@ -20,13 +20,6 @@ model Medico {
   nome          String
   especialidade String
   foto_url      String?
-  
-  imageFit      String?   @default("cover")
-  imagePosition String?   @default("object-top")
-  imageScale    Int?      @default(100)
-  imageOffsetX  Int?      @default(0)
-  imageOffsetY  Int?      @default(0)
-
   horarios      Horario[]
 
   @@map("Medicos")

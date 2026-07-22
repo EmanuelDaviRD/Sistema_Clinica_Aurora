@@ -675,24 +675,34 @@ export function LandingPage() {
           (loc) => loc.name.toLowerCase().trim() === dbMed.nome.toLowerCase().trim()
         );
 
+        // Parse image config from foto_url hash if present
+        let parsedConfig = { imageFit: 'cover', imagePosition: 'top', imageScale: 100, imageOffsetX: 0, imageOffsetY: 0 };
+        const rawPhotoUrl = (dbMed.foto_url && !dbMed.foto_url.startsWith('COLE_AQUI_')) ? dbMed.foto_url : (localMatch?.photoUrl || '');
+        if (rawPhotoUrl && rawPhotoUrl.includes('#imgcfg=')) {
+          try {
+            const configStr = rawPhotoUrl.split('#imgcfg=')[1];
+            parsedConfig = { ...parsedConfig, ...JSON.parse(decodeURIComponent(configStr)) };
+          } catch(e) {}
+        }
+
         return {
           id: `db-${dbMed.id}`,
           name: dbMed.nome,
           role: dbMed.especialidade,
           category: localMatch?.category || 'Medicina',
           crm: localMatch?.crm || 'CRM Ativo',
-          photoUrl: (dbMed.foto_url && !dbMed.foto_url.startsWith('COLE_AQUI_')) ? dbMed.foto_url : (localMatch?.photoUrl || ''), 
+          photoUrl: rawPhotoUrl.split('#')[0], 
           details: localMatch?.details || [
             'Atendimento integral e personalizado',
             'Acompanhamento e suporte continuado',
             'Excelência técnica orientada à saúde'
           ],
           whatsappMsg: localMatch?.whatsappMsg || `Olá, gostaria de agendar uma consulta com ${dbMed.nome}.`,
-          imageFit: dbMed.imageFit || 'cover',
-          imagePosition: dbMed.imagePosition || 'top',
-          imageScale: dbMed.imageScale !== undefined ? dbMed.imageScale : 100,
-          imageOffsetX: dbMed.imageOffsetX || 0,
-          imageOffsetY: dbMed.imageOffsetY || 0
+          imageFit: parsedConfig.imageFit,
+          imagePosition: parsedConfig.imagePosition,
+          imageScale: parsedConfig.imageScale,
+          imageOffsetX: parsedConfig.imageOffsetX,
+          imageOffsetY: parsedConfig.imageOffsetY
         };
       });
     }

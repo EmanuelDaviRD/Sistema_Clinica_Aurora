@@ -11,47 +11,18 @@ const router = Router();
 router.get('/', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const prisma = getPrisma();
-    let agendamentos;
-    try {
-      agendamentos = await prisma.agendamento.findMany({
-        include: {
-          horario: {
-            include: {
-              medico: true
-            }
+    const agendamentos = await prisma.agendamento.findMany({
+      include: {
+        horario: {
+          include: {
+            medico: true
           }
-        },
-        orderBy: {
-          id: 'desc'
         }
-      });
-    } catch (e: any) {
-      console.warn("Falling back agendamentos query due to missing medico columns:", e.message);
-      // Fallback: manually selecting old columns to avoid SELECT * failing on missing medico columns
-      agendamentos = await prisma.agendamento.findMany({
-        include: {
-          horario: {
-            select: {
-              id: true,
-              data_hora: true,
-              medico_id: true,
-              status_disponivel: true,
-              medico: {
-                select: {
-                  id: true,
-                  nome: true,
-                  especialidade: true,
-                  foto_url: true
-                }
-              }
-            }
-          }
-        },
-        orderBy: {
-          id: 'desc'
-        }
-      });
-    }
+      },
+      orderBy: {
+        id: 'desc'
+      }
+    });
     return res.json(agendamentos);
   } catch (error: any) {
     console.error('Erro ao buscar agendamentos:', error);
@@ -104,19 +75,8 @@ router.post('/', async (req: Request, res: Response) => {
         },
         include: {
           horario: {
-            select: {
-              id: true,
-              data_hora: true,
-              medico_id: true,
-              status_disponivel: true,
-              medico: {
-                select: {
-                  id: true,
-                  nome: true,
-                  especialidade: true,
-                  foto_url: true
-                }
-              }
+            include: {
+              medico: true
             }
           }
         }
