@@ -11,6 +11,11 @@ interface Medico {
   nome: string;
   especialidade: string;
   foto_url?: string;
+  imageFit?: string;
+  imagePosition?: string;
+  imageScale?: number;
+  imageOffsetX?: number;
+  imageOffsetY?: number;
   _count?: {
     horarios: number;
   };
@@ -61,6 +66,10 @@ export const DashboardAdmin: React.FC = () => {
   const [novoMedicoEspec, setNovoMedicoEspec] = useState('');
   const [novoMedicoFotoFicheiro, setNovoMedicoFotoFicheiro] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Edição de Médico
+  const [editingMedico, setEditingMedico] = useState<Medico | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Formulário: Cadastrar Horário para Médico
   const [novoHorarioData, setNovoHorarioData] = useState('');
@@ -196,6 +205,44 @@ export const DashboardAdmin: React.FC = () => {
       setMensagemErro(err.message);
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleSalvarEdicaoMedico = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingMedico) return;
+    setIsSavingEdit(true);
+    try {
+      const response = await fetch(`/api/medicos/${editingMedico.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          nome: editingMedico.nome,
+          especialidade: editingMedico.especialidade,
+          foto_url: editingMedico.foto_url,
+          imageFit: editingMedico.imageFit,
+          imagePosition: editingMedico.imagePosition,
+          imageScale: editingMedico.imageScale,
+          imageOffsetX: editingMedico.imageOffsetX,
+          imageOffsetY: editingMedico.imageOffsetY
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Falha ao salvar edição.');
+      }
+
+      setEditingMedico(null);
+      triggerFeedback('Configurações salvas com sucesso!');
+      fetchDatabaseData(token!);
+    } catch (err: any) {
+      setMensagemErro(err.message);
+    } finally {
+      setIsSavingEdit(false);
     }
   };
 
@@ -529,13 +576,29 @@ export const DashboardAdmin: React.FC = () => {
                             </span>
                           </div>
 
-                          <button
-                            onClick={() => handleExcluirMedico(med.id)}
-                            className="absolute top-4 right-4 text-slate-300 hover:text-red-500 p-1 rounded-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                            title="Remover Médico"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="absolute top-4 right-4 flex space-x-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all bg-white/80 p-1 rounded-lg backdrop-blur-sm shadow-sm border border-slate-100">
+                            <button
+                              onClick={() => setEditingMedico({
+                                ...med,
+                                imageFit: med.imageFit || 'cover',
+                                imagePosition: med.imagePosition || 'top',
+                                imageScale: med.imageScale ?? 100,
+                                imageOffsetX: med.imageOffsetX ?? 0,
+                                imageOffsetY: med.imageOffsetY ?? 0
+                              })}
+                              className="text-slate-400 hover:text-emerald-600 p-1 rounded-md transition-all"
+                              title="Configurar Imagem"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                            </button>
+                            <button
+                              onClick={() => handleExcluirMedico(med.id)}
+                              className="text-slate-400 hover:text-red-500 p-1 rounded-md transition-all"
+                              title="Remover Médico"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -727,6 +790,172 @@ export const DashboardAdmin: React.FC = () => {
         onConfirm={confirmModal.onConfirm}
         onCancel={closeConfirmModal}
       />
+
+      {/* Modal de Edição de Médico */}
+      {editingMedico && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col md:flex-row">
+            
+            {/* Esquerda: Formulário */}
+            <div className="flex-1 p-6 border-b md:border-b-0 md:border-r border-slate-200">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-serif font-bold text-[#0A2B2A] text-lg">Configuração da Imagem</h3>
+                <button onClick={() => setEditingMedico(null)} className="text-slate-400 hover:text-red-500 font-bold text-xl leading-none">✕</button>
+              </div>
+
+              <form onSubmit={handleSalvarEdicaoMedico} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-wider text-slate-500 font-bold block">1. Modo de Exibição</label>
+                  <select
+                    value={editingMedico.imageFit}
+                    onChange={(e) => setEditingMedico({...editingMedico, imageFit: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 text-xs rounded-lg p-2.5 focus:border-[#0A2B2A] outline-none"
+                  >
+                    <option value="cover">Cover (Corta para preencher)</option>
+                    <option value="contain">Contain (Mostra imagem inteira)</option>
+                    <option value="fill">Fill (Estica)</option>
+                    <option value="scale-down">Scale-down</option>
+                    <option value="unset">Original</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-wider text-slate-500 font-bold block">2. Posição da Imagem</label>
+                  <select
+                    value={editingMedico.imagePosition}
+                    onChange={(e) => setEditingMedico({...editingMedico, imagePosition: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 text-xs rounded-lg p-2.5 focus:border-[#0A2B2A] outline-none"
+                  >
+                    <option value="center">Centro</option>
+                    <option value="top">Topo</option>
+                    <option value="bottom">Base</option>
+                    <option value="left">Esquerda</option>
+                    <option value="right">Direita</option>
+                    <option value="top left">Superior Esquerda</option>
+                    <option value="top right">Superior Direita</option>
+                    <option value="bottom left">Inferior Esquerda</option>
+                    <option value="bottom right">Inferior Direita</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-wider text-slate-500 font-bold flex justify-between">
+                    <span>3. Zoom</span>
+                    <span>{editingMedico.imageScale}%</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="80"
+                    max="150"
+                    value={editingMedico.imageScale}
+                    onChange={(e) => setEditingMedico({...editingMedico, imageScale: Number(e.target.value)})}
+                    className="w-full accent-[#0A2B2A]"
+                  />
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  <label className="text-[10px] uppercase tracking-wider text-slate-500 font-bold block">4. Ajuste Manual</label>
+                  <div className="flex gap-4">
+                    <div className="flex-1 space-y-1">
+                      <div className="flex justify-between text-[10px] text-slate-500">
+                        <span>Horizontal</span>
+                        <span>{editingMedico.imageOffsetX}px</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="-100"
+                        max="100"
+                        value={editingMedico.imageOffsetX}
+                        onChange={(e) => setEditingMedico({...editingMedico, imageOffsetX: Number(e.target.value)})}
+                        className="w-full accent-[#0A2B2A]"
+                      />
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <div className="flex justify-between text-[10px] text-slate-500">
+                        <span>Vertical</span>
+                        <span>{editingMedico.imageOffsetY}px</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="-100"
+                        max="100"
+                        value={editingMedico.imageOffsetY}
+                        onChange={(e) => setEditingMedico({...editingMedico, imageOffsetY: Number(e.target.value)})}
+                        className="w-full accent-[#0A2B2A]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-slate-100 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setEditingMedico(null)}
+                    className="flex-1 border border-slate-200 text-slate-600 hover:bg-slate-50 py-2.5 rounded-xl text-xs font-bold transition-all"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSavingEdit}
+                    className="flex-1 bg-[#0A2B2A] hover:bg-[#134241] text-white py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-2"
+                  >
+                    {isSavingEdit ? 'Salvando...' : 'Salvar Configurações'}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Direita: Preview */}
+            <div className="flex-1 bg-[#FAF8F5] p-6 flex flex-col items-center justify-center rounded-r-2xl">
+              <h4 className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-4">5. Pré-visualização</h4>
+              
+              <div className="w-[280px] bg-slate-50 rounded-3xl overflow-hidden shadow-xl border border-slate-200/40 relative">
+                <div className="w-full aspect-[4/5] overflow-hidden relative bg-neutral-100 border-b border-slate-200/30">
+                  {editingMedico.foto_url ? (
+                    <div className="w-full h-full overflow-hidden flex items-center justify-center">
+                      <img 
+                        src={editingMedico.foto_url} 
+                        alt={editingMedico.nome} 
+                        className="w-full h-full filter contrast-[1.03] brightness-[1.01] saturate-[0.92] sepia-[0.04]" 
+                        style={{
+                          objectFit: (editingMedico.imageFit as any) || 'cover',
+                          objectPosition: (editingMedico.imagePosition as any) || 'top',
+                          transform: `scale(${(editingMedico.imageScale || 100) / 100}) translate(${editingMedico.imageOffsetX || 0}px, ${editingMedico.imageOffsetY || 0}px)`
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0A2B2A]/40 via-transparent to-transparent pointer-events-none" />
+                      <div className="absolute inset-0 bg-[#C5A880]/5 mix-blend-color pointer-events-none pb-[1px]" />
+                    </div>
+                  ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#0A2B2A] to-[#061C1B] text-white p-6 text-center">
+                      <div className="w-14 h-14 rounded-full bg-[#C5A880]/15 border border-[#C5A880]/25 flex items-center justify-center mb-4 shadow-inner">
+                        <User className="w-6 h-6 text-[#C5A880]" />
+                      </div>
+                      <span className="font-serif text-2xl tracking-widest text-[#C5A880] font-light">
+                        {editingMedico.nome.substring(0, 2).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="p-5 space-y-2 pb-6">
+                  <div className="flex items-center justify-between">
+                    <span className="bg-white border text-slate-500 text-[9px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider">
+                      Medicina
+                    </span>
+                    <span className="text-[#C5A880] font-mono text-[9px] font-bold uppercase">CRM Ativo</span>
+                  </div>
+                  <div>
+                    <h4 className="font-serif text-lg font-bold text-[#0A2B2A]">{editingMedico.nome}</h4>
+                    <p className="text-xs text-slate-500 font-semibold">{editingMedico.especialidade}</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

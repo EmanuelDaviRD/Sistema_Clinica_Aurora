@@ -22,6 +22,11 @@ router.get('/', async (req: Request, res: Response) => {
         nome: true,
         especialidade: true,
         foto_url: true,
+        imageFit: true,
+        imagePosition: true,
+        imageScale: true,
+        imageOffsetX: true,
+        imageOffsetY: true,
         _count: {
           select: { horarios: { where: { status_disponivel: true } } }
         }
@@ -39,7 +44,7 @@ router.get('/', async (req: Request, res: Response) => {
  * Protegido: Adiciona um novo médico com upload de foto
  */
 router.post('/', authMiddleware, upload.single('foto'), async (req: AuthenticatedRequest, res: Response) => {
-  const { nome, especialidade } = req.body;
+  const { nome, especialidade, imageFit, imagePosition, imageScale, imageOffsetX, imageOffsetY } = req.body;
   const file = req.file;
 
   if (!nome || !especialidade) {
@@ -86,7 +91,12 @@ router.post('/', authMiddleware, upload.single('foto'), async (req: Authenticate
       data: {
         nome,
         especialidade,
-        foto_url
+        foto_url,
+        imageFit: imageFit || 'cover',
+        imagePosition: imagePosition || 'top',
+        imageScale: imageScale ? Number(imageScale) : 100,
+        imageOffsetX: imageOffsetX ? Number(imageOffsetX) : 0,
+        imageOffsetY: imageOffsetY ? Number(imageOffsetY) : 0
       }
     });
     return res.status(201).json(medico);
@@ -102,7 +112,7 @@ router.post('/', authMiddleware, upload.single('foto'), async (req: Authenticate
  */
 router.put('/:id', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
-  const { nome, especialidade, foto_url } = req.body;
+  const { nome, especialidade, foto_url, imageFit, imagePosition, imageScale, imageOffsetX, imageOffsetY } = req.body;
 
   try {
     const prisma = getPrisma();
@@ -111,7 +121,12 @@ router.put('/:id', authMiddleware, async (req: AuthenticatedRequest, res: Respon
       data: {
         nome,
         especialidade,
-        foto_url
+        foto_url,
+        imageFit: imageFit !== undefined ? imageFit : undefined,
+        imagePosition: imagePosition !== undefined ? imagePosition : undefined,
+        imageScale: imageScale !== undefined ? Number(imageScale) : undefined,
+        imageOffsetX: imageOffsetX !== undefined ? Number(imageOffsetX) : undefined,
+        imageOffsetY: imageOffsetY !== undefined ? Number(imageOffsetY) : undefined
       }
     });
     return res.json(updated);

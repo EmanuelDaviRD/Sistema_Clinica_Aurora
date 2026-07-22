@@ -687,7 +687,12 @@ export function LandingPage() {
             'Acompanhamento e suporte continuado',
             'Excelência técnica orientada à saúde'
           ],
-          whatsappMsg: localMatch?.whatsappMsg || `Olá, gostaria de agendar uma consulta com ${dbMed.nome}.`
+          whatsappMsg: localMatch?.whatsappMsg || `Olá, gostaria de agendar uma consulta com ${dbMed.nome}.`,
+          imageFit: dbMed.imageFit || 'cover',
+          imagePosition: dbMed.imagePosition || 'top',
+          imageScale: dbMed.imageScale !== undefined ? dbMed.imageScale : 100,
+          imageOffsetX: dbMed.imageOffsetX || 0,
+          imageOffsetY: dbMed.imageOffsetY || 0
         };
       });
     }
@@ -1699,17 +1704,22 @@ export function LandingPage() {
                 {/* ETAPA 1 & 3: Tratamento Visual Unificado (Estilo Apple / Linear) */}
                 <div className="w-full aspect-[4/5] overflow-hidden relative bg-neutral-100 border-b border-slate-200/30 shrink-0">
                   {doc.photoUrl ? (
-                    <>
+                    <div className="w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out overflow-hidden flex items-center justify-center">
                       <img 
                         src={doc.photoUrl} 
                         alt={doc.name} 
-                        className="w-full h-full object-cover object-top filter contrast-[1.03] brightness-[1.01] saturate-[0.92] sepia-[0.04] group-hover:scale-105 transition-transform duration-700 ease-out" 
+                        className="w-full h-full filter contrast-[1.03] brightness-[1.01] saturate-[0.92] sepia-[0.04]" 
+                        style={{
+                          objectFit: doc.imageFit || 'cover',
+                          objectPosition: doc.imagePosition || 'top',
+                          transform: `scale(${(doc.imageScale || 100) / 100}) translate(${doc.imageOffsetX || 0}px, ${doc.imageOffsetY || 0}px)`
+                        }}
                         referrerPolicy="no-referrer"
                         onError={(e) => {
                           const imgEl = e.currentTarget as HTMLImageElement;
                           imgEl.style.display = 'none';
                           // Exibe o fallback caso o link do Supabase esteja vazio ou quebrado
-                          const fallbackEl = imgEl.parentElement?.querySelector('.img-fallback-placeholder');
+                          const fallbackEl = imgEl.parentElement?.parentElement?.querySelector('.img-fallback-placeholder');
                           if (fallbackEl) {
                             fallbackEl.classList.remove('hidden');
                           }
@@ -1718,7 +1728,7 @@ export function LandingPage() {
                       {/* Vinheta de fusão e tom de estúdio uniforme */}
                       <div className="absolute inset-0 bg-gradient-to-t from-[#0A2B2A]/40 via-transparent to-transparent pointer-events-none" />
                       <div className="absolute inset-0 bg-[#C5A880]/5 mix-blend-color pointer-events-none pb-[1px]" />
-                    </>
+                    </div>
                   ) : null}
 
                   {/* Fallback de Direção de Arte de Alto Padrão */}
