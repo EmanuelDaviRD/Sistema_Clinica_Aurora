@@ -1601,31 +1601,31 @@ export function LandingPage() {
               <h2 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-white leading-tight">
                 Espaço Reabilitar | <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E3C9A6] via-[#C5A880] to-[#E3C9A6] font-serif italic font-normal">
-                  Terapias Integradas Comportamentais
+                  Terapias Integradas e Reabilitação
                 </span>
               </h2>
 
               <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-                Nossa ala de reabilitação oferece acompanhamento especializado e integrativo de desenvolvimento infantil e adulto. Contamos com um time dedicado ao suporte comportamental do espectro autista (TEA) e TDAH utilizando o consagrado Método ABA, avaliação psicopedagógica profunda e terapias físicas.
+                Nossa ala de terapias e reabilitação oferece acompanhamento especializado e integrativo para o publico infantil e adulto. Contamos com uma equipe multiprofissional com atendimento humanizado e individualizado.
               </p>
 
               {/* Sub-lista de terapeutas reais do Espaço Reabilitar */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
                 <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
-                  <h4 className="font-bold text-sm text-[#E3C9A6]">Fonoaudiologia & ABA</h4>
-                  <p className="text-xs text-slate-300 mt-1">Linguagem, processamento auditivo e Teste da Linguinha com Márcia Duarte.</p>
+                  <h4 className="font-bold text-sm text-[#E3C9A6]">Fonoaudiologia </h4>
+                  <p className="text-xs text-slate-300 mt-1">ABA, linguagem, processamento auditivo e Teste da Linguinha.</p>
                 </div>
                 <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
-                  <h4 className="font-bold text-sm text-[#E3C9A6]">Psicologia & TCC</h4>
-                  <p className="text-xs text-slate-300 mt-1">Atendimento infanto-juvenil e de adultos com Samara Saraiva e Thayná Fernandes.</p>
+                  <h4 className="font-bold text-sm text-[#E3C9A6]">Psicologia</h4>
+                  <p className="text-xs text-slate-300 mt-1">Atendimento infanto-juvenil e de adultos.</p>
                 </div>
                 <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
-                  <h4 className="font-bold text-sm text-[#E3C9A6]">Fisioterapia Neuro</h4>
-                  <p className="text-xs text-slate-300 mt-1">Fisioterapia neurofuncional motora e acompanhamento respiratório com Mara Alves.</p>
+                  <h4 className="font-bold text-sm text-[#E3C9A6]">Fisioterapia</h4>
+                  <p className="text-xs text-slate-300 mt-1">Fisioterapia neurofuncional motora e acompanhamento respiratório.</p>
                 </div>
                 <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
-                  <h4 className="font-bold text-sm text-[#E3C9A6]">Psicopedagogia ABA</h4>
-                  <p className="text-xs text-slate-300 mt-1">Trabalho focado em transtornos de aprendizagem escolar com Socorro Maria.</p>
+                  <h4 className="font-bold text-sm text-[#E3C9A6]">Psicopedagogia</h4>
+                  <p className="text-xs text-slate-300 mt-1">Trabalho focado em transtornos de aprendizagem escolar.</p>
                 </div>
               </div>
 
@@ -1841,7 +1841,11 @@ export function LandingPage() {
               </p>
               
               <p className="text-[#354D4B] text-sm leading-relaxed">
-                Dispomos de amplos consultórios climatizados, equipamentos modernos para exames de análises clínicas preventivos, salas de reabilitação integrativa e profissionais dedicados à sua conveniência e bem-estar total. Saboreie um café gourmet em nossa moderna recepção enquanto cuidamos do que há de mais precioso: <strong>vida e saúde</strong>.
+                Dispomos de amplos consultórios climatizados, equipamentos modernos para exames de análises clínicas, exames de imagem, preventivos, salas de reabilitação integrativa e profissionais dedicados à sua conveniência e bem-estar total. Saboreie um café gourmet em nossa moderna recepção enquanto cuidamos do que há de mais precioso: <strong>vida e saúde</strong>.
+              </p>
+
+              <p className="text-[#354D4B] text-sm leading-relaxed">
+                Saboreie um café gourmet em nossa moderna recepção enquanto cuidamos do que há de mais precioso: <strong>vida e saúde</strong>.
               </p>
 
               <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-4">
@@ -1893,7 +1897,7 @@ export function LandingPage() {
                 </div>
                 <h4 className="font-bold text-[#0A2B2A] text-sm font-serif">Exames Ágeis</h4>
                 <p className="text-slate-500 text-xs mt-1.5 leading-relaxed">
-                  Contamos com laboratório parceiro experiente para oferecer laudos de alta precisão e processamento de análises clínicas em tempo recorde.
+                  Contamos com um laboratório equipado para oferecer laudos de alta precisão e processamento de análises clínicas em tempo hábil.
                 </p>
               </div>
 
@@ -1904,7 +1908,7 @@ export function LandingPage() {
                 </div>
                 <h4 className="font-bold text-[#0A2B2A] text-sm font-serif">Reabilitação Especializada</h4>
                 <p className="text-slate-500 text-xs mt-1.5 leading-relaxed">
-                  Instalações adaptadas para suporte e terapias comportamentais baseadas em ABA, ideais para o desenvolvimento de autistas e TDAH.
+                  Instalações adaptadas para suporte em terapias e reabilitação em todos os ciclos de vida.
                 </p>
               </div>
 
@@ -1939,7 +1943,7 @@ export function LandingPage() {
             {[
               {
                 q: "A clínica aceita planos de saúde ou convênios?",
-                a: "A Luna & Mendes atua de forma particular acessível na região de Aurora-CE, além de emitir relatórios especializados e Notas Fiscais para facilitação de Reembolso Médico em planos de saúde corporativos nacionais de forma fácil."
+                a: "A Luna & Mendes atualmente atua de forma particular acessível na região de Aurora-CE."
               },
               {
                 q: "Como agendar um exame de check-up ou preventivo ginecológico?",
@@ -1947,11 +1951,11 @@ export function LandingPage() {
               },
               {
                 q: "Quais terapias são desenvolvidas no Espaço Reabilitar?",
-                a: "O Espaço Reabilitar oferece assistência continuada multiprofissional com terapias baseadas em evidências científicas para dificuldades de cognição, linguagem, motoras, fonoaudiologia, psicologia e psicopedagogia no autismo e TEA."
+                a: "O Espaço Reabilitar oferece assistência continuada multiprofissional com terapias baseadas em evidências científicas. Com serviços..."
               },
               {
                 q: "Qual o horário de funcionamento das coletas acadêmico-laboratoriais?",
-                a: "Dispomos de atendimento humanizado de segunda a sexta-feira para exames de sangue gerais e coletas preventivas. Para maior comodidade, recomendamos agendamento prévio com confirmação das orientações de preparo clínicas."
+                a: "Dispomos de atendimento humanizado de segunda a sabado para exames de sangue laboratoriais e coletas preventivas. Para maior comodidade, recomendamos agendamento prévio com confirmação das orientações de preparo clínicas."
               }
             ].map((faq, index) => {
               const isOpen = activeFaq === index;
@@ -2076,7 +2080,7 @@ export function LandingPage() {
                   Venha conhecer as nossas amplas instalações
                 </h3>
                 <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">
-                  Excelente acessibilidade no coração de Aurora-CE, com recepção climatizada, consultórios multiprofissionais independentes e o inovador Espaço Reabilitar.
+                  Excelente acessibilidade no coração de Aurora-CE, com recepção acolhedora e humanizada, consultórios climatizados e equipados, equipe multiprofissional independente e o inovador Espaço Reabilitar.
                 </p>
               </div>
 
@@ -2295,13 +2299,13 @@ export function LandingPage() {
                 <span className="text-white font-serif font-bold text-lg tracking-wider">LUNA & MENDES</span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Consultas clínicas, exames médicos preventivos por imagem e o integrado Espaço Reabilitar de terapias multidisciplinares infantis e comportamentais na cidade de Aurora-CE.
+                Consultas clínicas, exames laborato e preventivos por imagem e o integrado Espaço Reabilitar de terapias multidisciplinares na cidade de Aurora-CE.
               </p>
               
               {/* Nota Normativa CFM no Brasil */}
               <div className="text-[10px] text-slate-500 space-y-1">
                 <p>Direção Técnica e Ocupacional:</p>
-                <p className="font-semibold text-slate-400">Dr. Henrique Feitosa / Dra. Myreia Petronio</p>
+                <p className="font-semibold text-slate-400">Dr. Richard Luna / Dra. Janiere Mendes</p>
                 <p>Clínica Multiprofissional Luna & Mendes Ltda.</p>
               </div>
             </div>
