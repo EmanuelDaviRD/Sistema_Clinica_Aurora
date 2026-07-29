@@ -1,0 +1,62 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model AdminUser {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  password_hash String
+  createdAt     DateTime @default(now())
+}
+
+model Medico {
+  id                        Int       @id @default(autoincrement())
+  nome                      String
+  especialidade             String
+  foto_url                  String?
+  registroProfissionalTipo   String?
+  registroProfissionalNumero String?
+  horarios                  Horario[]
+
+  @@map("Medicos")
+}
+
+model Horario {
+  id                Int           @id @default(autoincrement())
+  data_hora         DateTime
+  medico_id         Int
+  medico            Medico        @relation(fields: [medico_id], references: [id], onDelete: Cascade)
+  status_disponivel Boolean       @default(true)
+  agendamento       Agendamento?
+
+  @@map("Horarios")
+}
+
+model Paciente {
+  id           Int           @id @default(autoincrement())
+  nome         String
+  cpf          String?
+  telefone     String?
+  createdAt    DateTime      @default(now())
+  agendamentos Agendamento[]
+
+  @@map("Pacientes")
+}
+
+model Agendamento {
+  id            Int       @id @default(autoincrement())
+  nome_paciente String
+  telefone      String
+  horario_id    Int       @unique
+  horario       Horario   @relation(fields: [horario_id], references: [id], onDelete: Cascade)
+  paciente_id   Int?
+  paciente      Paciente? @relation(fields: [paciente_id], references: [id], onDelete: SetNull)
+
+  @@map("Agendamentos")
+}
