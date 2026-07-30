@@ -8,6 +8,12 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum ServiceType {
+  CONSULTA_MEDICA
+  EXAME_IMAGEM
+  EXAME_LABORATORIAL
+}
+
 model AdminUser {
   id            Int      @id @default(autoincrement())
   email         String   @unique
@@ -50,13 +56,60 @@ model Paciente {
 }
 
 model Agendamento {
-  id            Int       @id @default(autoincrement())
-  nome_paciente String
-  telefone      String
-  horario_id    Int       @unique
-  horario       Horario   @relation(fields: [horario_id], references: [id], onDelete: Cascade)
-  paciente_id   Int?
-  paciente      Paciente? @relation(fields: [paciente_id], references: [id], onDelete: SetNull)
+  id                    Int       @id @default(autoincrement())
+  nome_paciente         String
+  telefone              String
+  
+  serviceType           ServiceType @default(CONSULTA_MEDICA)
+  data_preferencial     DateTime?
+  
+  horario_id            Int?      @unique
+  horario               Horario?  @relation(fields: [horario_id], references: [id], onDelete: Cascade)
+  
+  paciente_id           Int?
+  paciente              Paciente? @relation(fields: [paciente_id], references: [id], onDelete: SetNull)
+
+  exame_imagem_id       Int?
+  exame_imagem          ExameImagem? @relation(fields: [exame_imagem_id], references: [id])
+  
+  exame_laboratorial_id Int?
+  exame_laboratorial    ExameLaboratorial? @relation(fields: [exame_laboratorial_id], references: [id])
+  
+  checkup_id            Int?
+  checkup               Checkup? @relation(fields: [checkup_id], references: [id])
 
   @@map("Agendamentos")
+}
+
+model ExameImagem {
+  id                 Int      @id @default(autoincrement())
+  nome               String
+  descricao          String?
+  preco              Float?
+  instrucoes_preparo String?
+  agendamentos       Agendamento[]
+  
+  @@map("ExamesImagem")
+}
+
+model ExameLaboratorial {
+  id                 Int      @id @default(autoincrement())
+  nome               String
+  descricao          String?
+  preco              Float?
+  instrucoes_preparo String?
+  agendamentos       Agendamento[]
+  
+  @@map("ExamesLaboratoriais")
+}
+
+model Checkup {
+  id                 Int      @id @default(autoincrement())
+  nome               String
+  descricao          String?
+  preco              String?
+  instrucoes_preparo String?
+  agendamentos       Agendamento[]
+  
+  @@map("Checkups")
 }

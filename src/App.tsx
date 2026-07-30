@@ -62,6 +62,7 @@ export function LandingPage() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [showAllDoctors, setShowAllDoctors] = useState(false);
   const [dbMedicos, setDbMedicos] = useState<any[]>([]); 
+  const [dbCheckups, setDbCheckups] = useState<any[]>([]);
   
   const [bookingStep, setBookingStep] = useState(1);
   const [appointment, setAppointment] = useState<AppointmentData>({
@@ -95,7 +96,7 @@ export function LandingPage() {
 
   useEffect(() => {
     let isMounted = true;
-    const loadMedicosFromDB = async () => {
+    const loadDataFromDB = async () => {
       try {
         const response = await fetch('/api/medicos');
         if (response.ok) {
@@ -107,8 +108,19 @@ export function LandingPage() {
       } catch (error) {
         console.warn('PostgreSQL /api/medicos offline or unreachable on load. Using structured fallback.', error);
       }
+      try {
+        const responseChk = await fetch('/api/checkups');
+        if (responseChk.ok) {
+          const dataChk = await responseChk.json();
+          if (isMounted && Array.isArray(dataChk)) {
+            setDbCheckups(dataChk);
+          }
+        }
+      } catch (error) {
+        console.warn('PostgreSQL /api/checkups offline or unreachable on load.', error);
+      }
     };
-    loadMedicosFromDB();
+    loadDataFromDB();
     return () => { isMounted = false; };
   }, []);
 
@@ -187,7 +199,7 @@ export function LandingPage() {
     }
   }, [bookingStep, isBookingModalOpen, appointment]);
 
-  const checkups = [
+  const staticCheckups = [
     {
       id: 'checkup-completo',
       name: 'Check-up Completo',
@@ -285,6 +297,19 @@ export function LandingPage() {
       ]
     }
   ];
+
+  const checkups = dbCheckups.length > 0 ? dbCheckups.map(c => {
+    let parsed = { subtitle: '', tag: '', exams: [] };
+    try { parsed = JSON.parse(c.descricao || '{}'); } catch(e){}
+    return {
+      id: c.id,
+      name: c.nome,
+      price: c.preco,
+      subtitle: parsed.subtitle || '',
+      tag: parsed.tag || '',
+      exams: parsed.exams || []
+    };
+  }) : staticCheckups;
 
   const doctors = [
     {
@@ -1507,13 +1532,7 @@ export function LandingPage() {
                 <div className="pt-6 mt-6 border-t border-slate-100">
                   <button
                     onClick={() => {
-                      setAppointment({
-                        ...appointment,
-                        specialty: 'Análises Clínicas',
-                        checkup: chk.name
-                      });
-                      setBookingStep(1);
-                      navigate('/agendar');
+                      navigate(`/agendar?tipo=EXAME_LABORATORIAL&checkupId=${chk.id}`);
                     }}
                     className="w-full bg-[#0A2B2A]/90 hover:bg-[#0A2B2A] text-[#FAF8F5] py-2.5 rounded-xl text-xs font-bold transition-all hover:scale-[1.02] cursor-pointer"
                   >

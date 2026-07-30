@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
 import { ImageCropModal } from './ImageCropModal';
+import { AdminServicos } from './AdminServicos';
 
 interface Medico {
   id: number;
@@ -133,7 +134,7 @@ export const DashboardAdmin: React.FC = () => {
 
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
   const [mensagemErro, setMensagemErro] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'agendamentos' | 'pacientes' | 'medicos' | 'horarios'>('agendamentos');
+  const [activeTab, setActiveTab] = useState<'agendamentos' | 'pacientes' | 'medicos' | 'horarios' | 'servicos'>('agendamentos');
 
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -1097,10 +1098,18 @@ export const DashboardAdmin: React.FC = () => {
                               <td className="py-3 font-semibold text-slate-800">{ag.nome_paciente}</td>
                               <td className="py-3 font-mono text-slate-500">{ag.telefone}</td>
                               <td className="py-3">
-                                <p className="font-semibold text-slate-800">{ag.horario?.medico?.nome}</p>
-                                <p className="text-[10px] text-[#C5A880]">{ag.horario?.medico?.especialidade}</p>
+                                <p className="font-semibold text-slate-800">
+                                  {ag.serviceType === 'CONSULTA_MEDICA' ? ag.horario?.medico?.nome : (ag.checkup?.nome || ag.exame_imagem?.nome || ag.exame_laboratorial?.nome)}
+                                </p>
+                                <p className="text-[10px] text-[#C5A880]">
+                                  {ag.serviceType === 'CONSULTA_MEDICA' ? ag.horario?.medico?.especialidade : (ag.serviceType === 'EXAME_IMAGEM' ? 'Exame de Imagem' : 'Exame Laboratorial/Check-up')}
+                                </p>
                               </td>
-                              <td className="py-3 font-mono text-slate-600">{formatarData(ag.horario?.data_hora)}</td>
+                              <td className="py-3 font-mono text-slate-600">
+                                {ag.serviceType === 'CONSULTA_MEDICA' 
+                                  ? formatarData(ag.horario?.data_hora) 
+                                  : formatarData(ag.data_preferencial)}
+                              </td>
                               <td className="py-3 text-center">
                                 <button
                                   onClick={() => handleCancelarAgendamento(ag.id)}
@@ -1442,6 +1451,11 @@ export const DashboardAdmin: React.FC = () => {
 
             </div>
           </div>
+        )}
+
+        {/* ABA: SERVIÇOS */}
+        {activeTab === 'servicos' && (
+          <AdminServicos token={token} />
         )}
 
       </main>

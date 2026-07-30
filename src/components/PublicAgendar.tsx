@@ -1,31 +1,11 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import useSWR from 'swr';
 import { 
   Calendar, Clock, User, Phone, ChevronRight, Stethoscope, 
-  ArrowLeft, CheckCircle, AlertCircle, MessageCircle 
+  ArrowLeft, CheckCircle, AlertCircle, MessageCircle, Activity, HeartPulse
 } from 'lucide-react';
 import { getWhatsAppLink } from '../utils/whatsapp';
-
-interface Medico {
-  id: number;
-  nome: string;
-  especialidade: string;
-  foto_url?: string;
-  _count?: { horarios: number };
-}
-
-interface Horario {
-  id: number;
-  data_hora: string;
-  medico_id: number;
-  status_disponivel: boolean;
-  medico: {
-    nome: string;
-    foto_url?: string;
-    especialidade: string;
-  };
-}
 
 const fetcher = (url: string) => fetch(url).then((res) => {
   if (!res.ok) throw new Error('Falha ao buscar dados');
@@ -34,41 +14,51 @@ const fetcher = (url: string) => fetch(url).then((res) => {
 
 export const PublicAgendar: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   
-  // Utilizando SWR para Cache e Deduplicação de requisições
-  const { data: medicos, error: errorMedicos, isLoading: isLoadingMedicos } = useSWR<Medico[]>(
-    '/api/medicos', 
-    fetcher, 
-    { dedupingInterval: 300000, revalidateOnFocus: false }
-  );
+  // Parsers de URL
+  const queryParams = new URLSearchParams(location.search);
+  const initialType = queryParams.get('tipo');
+  const initialCheckupId = queryParams.get('checkupId');
+
+  const { data: medicos, isLoading: isLoadingMedicos } = useSWR('/api/medicos', fetcher);
+  const { data: horariosDisponiveis, isLoading: isLoadingHorarios } = useSWR('/api/horarios?apenas_disponiveis=true', fetcher);
+  const { data: checkups, isLoading: isLoadingCheckups } = useSWR('/api/checkups', fetcher);
+  const { data: examesImagem, isLoading: isLoadingImagens } = useSWR('/api/exames/imagem', fetcher);
+
+  const isLoading = isLoadingMedicos || isLoadingHorarios || isLoadingCheckups || isLoadingImagens;
+
+  // Estados de Fluxo
+  const [step, setStep] = useState(1);
+  const [serviceType, setServiceType] = useState<string | null>(null); // 'CONSULTA_MEDICA', 'EXAME_IMAGEM', 'EXAME_LABORATORIAL'
+  const [medicoSelecionado, setMedicoSelecionado] = useState<any>(null);
+  const [exameSelecionado, setExameSelecionado] = useState<any>(null);
   
-  const { data: horariosDisponiveis, error: errorHorarios, isLoading: isLoadingHorarios } = useSWR<Horario[]>(
-    '/api/horarios?apenas_disponiveis=true', 
-    fetcher, 
-    { dedupingInterval: 300000, revalidateOnFocus: false }
-  );
-
-  const isLoading = isLoadingMedicos || isLoadingHorarios;
-  const isError = errorMedicos || errorHorarios;
-
-  // Seleções do fluxo de agendamento
-  const [medicoSelecionado, setMedicoSelecionado] = useState<Medico | null>(null);
-  const [horarioSelecionado, setHorarioSelecionado] = useState<Horario | null>(null);
+  const [horarioSelecionado, setHorarioSelecionado] = useState<any>(null);
+  const [dataPreferencial, setDataPreferencial] = useState('');
   const [nomePaciente, setNomePaciente] = useState('');
   const [telefone, setTelefone] = useState('');
 
-  // Estados de controle de fluxo e feedback
-  const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [agendamentoSucesso, setAgendamentoSucesso] = useState<any>(null);
 
-  // Lista de horários filtrada de acordo com o médico escolhido
+  // Inicialização via URL
+  useEffect(() => {
+    if (initialType === 'EXAME_LABORATORIAL' && initialCheckupId && checkups) {
+      const chk = checkups.find((c: any) => c.id === Number(initialCheckupId) || c.id === initialCheckupId);
+      if (chk) {
+        setServiceType('EXAME_LABORATORIAL');
+        setExameSelecionado(chk);
+        setStep(3); // Pula direto para coleta de dados
+      }
+    }
+  }, [initialType, initialCheckupId, checkups]);
+
   const horariosDoMedico = (horariosDisponiveis || []).filter(
-    (h) => !medicoSelecionado || h.medico_id === medicoSelecionado.id
+    (h: any) => !medicoSelecionado || h.medico_id === medicoSelecionado.id
   );
 
-  // Máscara de telefone (XX) 9XXXX-XXXX com limite de 11 dígitos numéricos
   const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawDigits = e.target.value.replace(/\D/g, '').slice(0, 11);
     let formatted = rawDigits;
@@ -88,34 +78,43 @@ export const PublicAgendar: React.FC = () => {
 
   const handleAgendar = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nomePaciente || !telefone || !horarioSelecionado) return;
+    if (!nomePaciente || !telefone) return;
+    if (serviceType === 'CONSULTA_MEDICA' && !horarioSelecionado) return;
+    if (serviceType !== 'CONSULTA_MEDICA' && !dataPreferencial) return;
 
     setIsSubmitting(true);
     setErrorMsg(null);
 
+    const payload: any = {
+      nome_paciente: nomePaciente,
+      telefone,
+      serviceType
+    };
+
+    if (serviceType === 'CONSULTA_MEDICA') {
+      payload.horario_id = horarioSelecionado.id;
+    } else {
+      payload.data_preferencial = dataPreferencial;
+      if (serviceType === 'EXAME_LABORATORIAL') {
+        payload.checkup_id = exameSelecionado.id;
+      } else if (serviceType === 'EXAME_IMAGEM') {
+        payload.exame_imagem_id = exameSelecionado.id;
+      }
+    }
+
     try {
       const response = await fetch('/api/agendamentos', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          nome_paciente: nomePaciente,
-          telefone,
-          horario_id: horarioSelecionado.id
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
-
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Desculpe, ocorreu uma falha ao consolidar o agendamento.');
-      }
+      if (!response.ok) throw new Error(data.message || 'Falha ao agendar.');
 
       setAgendamentoSucesso(data.agendamento);
       setStep(4);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Não fomos capazes de processar o agendamento. Tente novamente.');
+      setErrorMsg(err.message || 'Erro ao processar agendamento.');
     } finally {
       setIsSubmitting(false);
     }
@@ -124,7 +123,7 @@ export const PublicAgendar: React.FC = () => {
   const formatarData = (isoStr: string) => {
     try {
       const d = new Date(isoStr);
-      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
     } catch {
       return isoStr;
     }
@@ -139,51 +138,21 @@ export const PublicAgendar: React.FC = () => {
     }
   };
 
-  // Skeleton Loading Elegante para a Tabela de Médicos
-  if (isLoading) {
+  if (isLoading && step < 4) {
     return (
       <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center p-4">
-        <div className="bg-white border border-[#C5A880]/20 rounded-2xl shadow-xl overflow-hidden p-6 md:p-8 w-full max-w-xl animate-pulse">
+        <div className="bg-white border border-[#C5A880]/20 rounded-2xl shadow-xl overflow-hidden p-6 w-full max-w-xl animate-pulse">
           <div className="h-6 bg-slate-200 rounded w-1/3 mb-2"></div>
           <div className="h-3 bg-slate-100 rounded w-1/2 mb-8"></div>
-          
-          <div className="space-y-4">
-            {[1, 2, 3].map((skeleton) => (
-              <div key={skeleton} className="flex items-center space-x-4 p-4 border border-slate-100 rounded-xl">
-                <div className="w-12 h-12 bg-slate-200 rounded-full shrink-0"></div>
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-slate-200 rounded w-3/4"></div>
-                  <div className="h-3 bg-slate-100 rounded w-1/2"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Graceful Degradation / Fallback no caso da API Falhar (Offline/Erro de DB)
-  if (isError) {
-    return (
-      <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center p-4">
-        <div className="text-center bg-white p-8 rounded-2xl shadow-sm border border-red-100 max-w-sm">
-          <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-          <h2 className="text-xl font-serif text-[#0A2B2A] font-bold">Serviço Indisponível</h2>
-          <p className="text-sm text-slate-500 mt-2 mb-6">Infelizmente não foi possível carregar os horários. Verifique sua conexão ou tente novamente mais tarde.</p>
-          <button onClick={() => navigate('/')} className="bg-[#0A2B2A] text-white px-6 py-2 rounded-xl text-xs font-bold">
-            Voltar ao Início
-          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] py-12 px-4 md:px-8 font-sans" id="public-booking-view">
+    <div className="min-h-screen bg-[#FAF8F5] py-12 px-4 md:px-8 font-sans">
       <div className="max-w-xl mx-auto bg-white border border-[#C5A880]/20 rounded-2xl shadow-xl overflow-hidden p-6 md:p-8">
         
-        {/* Topo do Formulário */}
         {step < 4 && (
           <div className="mb-8">
             <button 
@@ -199,269 +168,224 @@ export const PublicAgendar: React.FC = () => {
               <ArrowLeft className="w-4 h-4" />
               <span>{step === 1 ? 'Voltar para Home' : 'Voltar Etapa'}</span>
             </button>
-            
-            <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="mt-4 flex justify-between items-center">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[#0A2B2A]">Agendar Consulta Online</h2>
-                <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">Preencha os passos abaixo para reservar sua consulta</p>
+                <h2 className="text-2xl font-serif font-bold text-[#0A2B2A]">Agendamento Online</h2>
+                <p className="text-xs text-slate-500 mt-1">Siga os passos para concluir sua reserva</p>
               </div>
-              <span className="text-xs font-mono font-bold bg-[#0A2B2A]/5 text-[#0A2B2A] px-3 py-1.5 rounded-full w-fit">
+              <span className="text-xs font-mono font-bold bg-[#0A2B2A]/5 text-[#0A2B2A] px-3 py-1.5 rounded-full">
                 Etapa {step} de 3
               </span>
             </div>
-
-            {/* Barra de Progresso Visual */}
-            <div className="w-full h-1.5 bg-slate-100 rounded-full mt-4 overflow-hidden">
-              <div 
-                className="h-full bg-emerald-500 transition-all duration-300"
-                style={{ width: `${(step / 3) * 100}%` }}
-              ></div>
-            </div>
           </div>
         )}
 
-        {/* Feedback de erro */}
         {errorMsg && (
-          <div className="mb-6 bg-red-50 border border-red-100 rounded-xl p-4 flex items-start space-x-3 text-red-700 text-sm" id="booking-error-panel">
-            <AlertCircle className="w-5 h-5 mt-0.5 shrink-0" />
-            <div>
-              <p className="font-semibold">Erro de Agendamento</p>
-              <p className="mt-0.5 opacity-90 text-xs sm:text-sm">{errorMsg}</p>
-            </div>
+          <div className="mb-6 bg-red-50 border border-red-100 rounded-xl p-4 flex items-start space-x-3 text-red-700 text-sm">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <p>{errorMsg}</p>
           </div>
         )}
 
-        {/* ETAPA 1: SELECIONAR MÉDICO */}
+        {/* ETAPA 1: O QUE DESEJA AGENDAR */}
         {step === 1 && (
           <div className="space-y-4">
-            <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-2">1. Escolha o Médico</h3>
-            
-            {(!medicos || medicos.length === 0) ? (
-              <p className="text-center py-10 text-sm text-slate-400 font-mono">Nenhum médico disponível para agendamento no momento.</p>
-            ) : (
-              <div className="space-y-3">
-                {medicos.map((med) => (
-                  <button
-                    key={med.id}
-                    onClick={() => {
-                      setMedicoSelecionado(med);
-                      setStep(2);
-                    }}
-                    className={`w-full text-left p-4 rounded-2xl border flex items-center justify-between transition-all hover:bg-[#FAF8F5] min-h-[56px] active:scale-[0.99] ${
-                      medicoSelecionado?.id === med.id 
-                        ? 'border-[#0A2B2A] bg-[#FAF8F5]/50 ring-2 ring-[#0A2B2A]/10' 
-                        : 'border-slate-200/80 bg-white shadow-2xs'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-3.5">
-                      {med.foto_url ? (
-                        <img 
-                          src={med.foto_url} 
-                          alt={med.nome} 
-                          className="w-12 h-12 rounded-full object-cover shrink-0 border border-slate-200"
-                          referrerPolicy="no-referrer"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 bg-[#0A2B2A]/5 text-[#0A2B2A] rounded-full flex items-center justify-center shrink-0">
-                          <User className="w-6 h-6" />
-                        </div>
-                      )}
-                      <div>
-                        <p className="text-sm font-bold text-[#0A2B2A]">{med.nome}</p>
-                        <p className="text-xs text-[#C5A880] font-medium flex items-center mt-0.5">
-                          <Stethoscope className="w-3.5 h-3.5 mr-1 shrink-0" />
-                          <span>{med.especialidade}</span>
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-slate-400" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+            <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-2">O que você deseja agendar?</h3>
+            <div className="space-y-3">
+              <button onClick={() => { setServiceType('CONSULTA_MEDICA'); setStep(2); }} className="w-full text-left p-4 rounded-2xl border border-slate-200 hover:border-[#0A2B2A] flex items-center justify-between transition-all">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center"><Stethoscope className="w-6 h-6"/></div>
+                  <div><p className="font-bold text-[#0A2B2A]">Consultas Médicas</p><p className="text-xs text-slate-500">Com especialistas da clínica</p></div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-slate-400" />
+              </button>
+              
+              <button onClick={() => { setServiceType('EXAME_LABORATORIAL'); setStep(2); }} className="w-full text-left p-4 rounded-2xl border border-slate-200 hover:border-[#0A2B2A] flex items-center justify-between transition-all">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center"><Activity className="w-6 h-6"/></div>
+                  <div><p className="font-bold text-[#0A2B2A]">Exames Laboratoriais</p><p className="text-xs text-slate-500">Check-ups e exames de sangue</p></div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-slate-400" />
+              </button>
 
-        {/* ETAPA 2: ESCOLHER HORÁRIO */}
-        {step === 2 && (
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-              <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">2. Selecione o Horário Vago</h3>
-              {medicoSelecionado && (
-                <span className="text-xs text-slate-600 font-semibold">Médico: {medicoSelecionado.nome}</span>
-              )}
+              <button onClick={() => { setServiceType('EXAME_IMAGEM'); setStep(2); }} className="w-full text-left p-4 rounded-2xl border border-slate-200 hover:border-[#0A2B2A] flex items-center justify-between transition-all">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center"><HeartPulse className="w-6 h-6"/></div>
+                  <div><p className="font-bold text-[#0A2B2A]">Exames de Imagem</p><p className="text-xs text-slate-500">Ultrassonografias e Raios-X</p></div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-slate-400" />
+              </button>
             </div>
-
-            {horariosDoMedico.length === 0 ? (
-              <div className="text-center py-10 bg-slate-50/50 rounded-2xl border border-dashed text-slate-400 border-slate-200 p-4">
-                <p className="text-sm font-mono mb-3">Nenhum horário disponível para este profissional.</p>
-                <button 
-                  onClick={() => {
-                    setMedicoSelecionado(null);
-                    setStep(1);
-                  }}
-                  className="text-xs sm:text-sm text-[#0A2B2A] font-bold underline py-2"
-                >
-                  Escolher outro profissional
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-2.5 max-h-[320px] overflow-y-auto pr-1">
-                {horariosDoMedico.map((hor) => (
-                  <button
-                    key={hor.id}
-                    onClick={() => {
-                      setHorarioSelecionado(hor);
-                      setStep(3);
-                    }}
-                    className={`p-3.5 rounded-2xl border text-center transition-all min-h-[52px] active:scale-[0.98] ${
-                      horarioSelecionado?.id === hor.id
-                        ? 'border-emerald-500 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-500/20'
-                        : 'border-slate-200/80 bg-white hover:border-slate-300 shadow-2xs'
-                    }`}
-                  >
-                    <p className="text-xs sm:text-sm font-bold flex items-center justify-center space-x-1 text-slate-800">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{formatarData(hor.data_hora)}</span>
-                    </p>
-                    <p className="text-xs font-mono font-medium text-slate-600 mt-1 flex items-center justify-center space-x-1">
-                      <Clock className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{formatarHora(hor.data_hora)} hs</span>
-                    </p>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         )}
 
-        {/* ETAPA 3: DADOS COMPLEMENTARES E SUBMISSÃO */}
+        {/* ETAPA 2: ESCOLHER PROFISSIONAL OU EXAME */}
+        {step === 2 && serviceType === 'CONSULTA_MEDICA' && (
+          <div className="space-y-4">
+            <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-2">Escolha o Médico</h3>
+            <div className="space-y-3">
+              {(medicos || []).map((med: any) => (
+                <button
+                  key={med.id}
+                  onClick={() => { setMedicoSelecionado(med); setStep(3); }}
+                  className="w-full text-left p-4 rounded-2xl border border-slate-200 flex items-center justify-between hover:bg-[#FAF8F5]"
+                >
+                  <div className="flex items-center space-x-3.5">
+                    {med.foto_url ? <img src={med.foto_url} alt={med.nome} className="w-12 h-12 rounded-full object-cover"/> : <div className="w-12 h-12 bg-slate-100 rounded-full"/>}
+                    <div>
+                      <p className="text-sm font-bold text-[#0A2B2A]">{med.nome}</p>
+                      <p className="text-xs text-[#C5A880]">{med.especialidade}</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-slate-400" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === 2 && serviceType === 'EXAME_LABORATORIAL' && (
+          <div className="space-y-4">
+            <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-2">Escolha o Pacote de Check-up</h3>
+            <div className="space-y-3">
+              {(checkups || []).map((chk: any) => (
+                <button
+                  key={chk.id}
+                  onClick={() => { setExameSelecionado(chk); setStep(3); }}
+                  className="w-full text-left p-4 rounded-2xl border border-slate-200 flex flex-col hover:bg-[#FAF8F5]"
+                >
+                  <p className="text-sm font-bold text-[#0A2B2A]">{chk.nome}</p>
+                  <p className="text-xs text-slate-500 mt-1">{chk.preco}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === 2 && serviceType === 'EXAME_IMAGEM' && (
+          <div className="space-y-4">
+            <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-2">Escolha o Exame de Imagem</h3>
+            <div className="space-y-3">
+              {(examesImagem || []).map((ex: any) => (
+                <button
+                  key={ex.id}
+                  onClick={() => { setExameSelecionado(ex); setStep(3); }}
+                  className="w-full text-left p-4 rounded-2xl border border-slate-200 hover:bg-[#FAF8F5]"
+                >
+                  <p className="text-sm font-bold text-[#0A2B2A]">{ex.nome}</p>
+                </button>
+              ))}
+              {(!examesImagem || examesImagem.length === 0) && <p className="text-sm text-slate-400 text-center py-4">Nenhum exame de imagem disponível.</p>}
+            </div>
+          </div>
+        )}
+
+        {/* ETAPA 3: DATA E DADOS PESSOAIS */}
         {step === 3 && (
-          <form onSubmit={handleAgendar} className="space-y-4">
-            <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-2">3. Suas Informações</h3>
+          <form onSubmit={handleAgendar} className="space-y-6">
             
-            {/* Revisão do Horário Selecionado */}
-            {horarioSelecionado && (
-              <div className="bg-slate-50 border border-slate-200/70 rounded-2xl p-4 space-y-2 mb-4">
-                <p className="text-[10px] text-slate-500 uppercase tracking-wider font-extrabold">Resumo do Agendamento</p>
-                <div className="text-xs sm:text-sm space-y-1">
-                  <p className="text-slate-800"><strong className="text-slate-600">Profissional:</strong> {horarioSelecionado.medico?.nome}</p>
-                  <p className="text-slate-800"><strong className="text-slate-600">Especialidade:</strong> {horarioSelecionado.medico?.especialidade}</p>
-                  <p className="text-slate-800"><strong className="text-slate-600">Data & Hora:</strong> {formatarData(horarioSelecionado.data_hora)} às {formatarHora(horarioSelecionado.data_hora)} hs</p>
+            {serviceType === 'CONSULTA_MEDICA' && (
+              <div>
+                <h3 className="text-xs font-extrabold text-slate-700 uppercase mb-2">Selecione o Horário</h3>
+                <div className="grid grid-cols-2 gap-2.5 max-h-[200px] overflow-y-auto">
+                  {horariosDoMedico.map((hor: any) => (
+                    <button
+                      key={hor.id} type="button"
+                      onClick={() => setHorarioSelecionado(hor)}
+                      className={`p-3 rounded-xl border text-center ${horarioSelecionado?.id === hor.id ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-white'}`}
+                    >
+                      <p className="text-xs font-bold text-slate-800">{formatarData(hor.data_hora)}</p>
+                      <p className="text-xs text-slate-600">{formatarHora(hor.data_hora)} hs</p>
+                    </button>
+                  ))}
+                  {horariosDoMedico.length === 0 && <p className="text-xs text-slate-500 col-span-2">Nenhum horário disponível.</p>}
                 </div>
               </div>
             )}
 
-            <div className="space-y-1">
-              <label className="text-xs uppercase tracking-wider text-slate-600 font-bold block">Nome Completo *</label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
-                  <User className="w-4 h-4" />
-                </span>
+            {serviceType !== 'CONSULTA_MEDICA' && (
+              <div>
+                <h3 className="text-xs font-extrabold text-slate-700 uppercase mb-2">Data Preferencial</h3>
                 <input
-                  type="text"
+                  type="date"
                   required
-                  value={nomePaciente}
-                  onChange={(e) => setNomePaciente(e.target.value)}
-                  placeholder="Seu nome completo"
-                  className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl pl-10 pr-3.5 py-3.5 focus:border-[#0A2B2A] focus:bg-white outline-none font-medium min-h-[48px]"
+                  value={dataPreferencial}
+                  onChange={(e) => setDataPreferencial(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl px-4 py-3 outline-none focus:border-[#0A2B2A]"
                 />
+                <p className="text-[10px] text-slate-500 mt-1">* A clínica entrará em contato para confirmar o horário exato.</p>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <h3 className="text-xs font-extrabold text-slate-700 uppercase">Seus Dados</h3>
+              <div>
+                <label className="text-xs uppercase text-slate-600 font-bold block mb-1">Nome Completo *</label>
+                <input type="text" required value={nomePaciente} onChange={(e) => setNomePaciente(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none" />
+              </div>
+              <div>
+                <label className="text-xs uppercase text-slate-600 font-bold block mb-1">Celular / WhatsApp *</label>
+                <input type="tel" required value={telefone} onChange={handleTelefoneChange} maxLength={15} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none" />
               </div>
             </div>
 
-            <div className="space-y-1 font-sans">
-              <label className="text-xs uppercase tracking-wider text-slate-600 font-bold block">Celular / WhatsApp *</label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 pointer-events-none">
-                  <Phone className="w-4 h-4" />
-                </span>
-                <input
-                  type="tel"
-                  required
-                  value={telefone}
-                  onChange={handleTelefoneChange}
-                  maxLength={15}
-                  placeholder="(88) 99624-8427"
-                  className="w-full bg-slate-50 border border-slate-200 text-sm rounded-xl pl-10 pr-3.5 py-3.5 focus:border-[#0A2B2A] focus:bg-white outline-none font-medium min-h-[48px]"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-400 text-white py-3.5 px-5 rounded-xl text-sm font-bold transition-all transform active:scale-98 flex items-center justify-center space-x-2 shadow-md mt-6 min-h-[50px] cursor-pointer"
-            >
-              {isSubmitting ? (
-                <span>Agendando, por favor aguarde...</span>
-              ) : (
-                <>
-                  <CheckCircle className="w-5 h-5 shrink-0" />
-                  <span>Confirmar Agendamento</span>
-                </>
-              )}
+            <button type="submit" disabled={isSubmitting} className="w-full bg-emerald-500 text-white font-bold py-3.5 rounded-xl shadow-md">
+              {isSubmitting ? 'Aguarde...' : 'Confirmar Agendamento'}
             </button>
           </form>
         )}
 
-        {/* ETAPA 4: CONFIRMAÇÃO DE SUCESSO E WHATSAPP */}
+        {/* ETAPA 4: SUCESSO E INSTRUÇÕES */}
         {step === 4 && agendamentoSucesso && (
-          <div className="text-center py-6" id="booking-success-screen">
-            <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="text-center py-6">
+            <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-10 h-10" />
             </div>
-
-            <h2 className="text-2xl font-serif font-bold text-[#0A2B2A] tracking-tight">Consulta Agendada!</h2>
-            <p className="text-xs text-slate-500 mt-2 max-w-sm mx-auto">
-              Sua consulta com o <strong>{agendamentoSucesso.horario?.medico?.nome || medicoSelecionado?.nome}</strong> foi registrada no banco de nossa Clínica com sucesso.
-            </p>
-
-            <div className="bg-[#FAF8F5]/70 border border-dashed border-[#C5A880]/30 rounded-2xl p-5 mt-6 max-w-sm mx-auto text-left text-xs space-y-1.5">
-              <p className="border-b pb-1 mb-2 font-bold text-slate-700 uppercase tracking-wider text-[10px]">Resumo do Agendamento</p>
-              <p><strong className="text-slate-500">Paciente:</strong> {agendamentoSucesso.nome_paciente}</p>
-              <p><strong className="text-slate-500">Médico:</strong> {agendamentoSucesso.horario?.medico?.nome || medicoSelecionado?.nome}</p>
-              <p><strong className="text-slate-500">Especialidade:</strong> {agendamentoSucesso.horario?.medico?.especialidade || medicoSelecionado?.especialidade}</p>
-              <p><strong className="text-slate-500">Data & Hora:</strong> {formatarData(agendamentoSucesso.horario?.data_hora || horarioSelecionado?.data_hora)} às {formatarHora(agendamentoSucesso.horario?.data_hora || horarioSelecionado?.data_hora)} hs</p>
-            </div>
-
-            {/* Botão em Destaque do WhatsApp */}
-            <a
-              href={getWhatsAppLink(
-                '5588996248427',
-                `Olá! Acabei de realizar um agendamento de consulta online no site da clínica.\n\n*Nome do Paciente:* ${agendamentoSucesso.nome_paciente}\n*Médico:* ${agendamentoSucesso.horario?.medico?.nome || medicoSelecionado?.nome || ''}\n*Especialidade:* ${agendamentoSucesso.horario?.medico?.especialidade || medicoSelecionado?.especialidade || ''}\n*Data e Horário:* ${formatarData(agendamentoSucesso.horario?.data_hora || horarioSelecionado?.data_hora)} às ${formatarHora(agendamentoSucesso.horario?.data_hora || horarioSelecionado?.data_hora)} hs\n\nGostaria de confirmar meu agendamento.`
-              )}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-6 w-full max-w-sm mx-auto bg-emerald-500 hover:bg-emerald-600 text-white py-3.5 px-6 rounded-xl font-bold text-xs flex items-center justify-center space-x-2 shadow-lg shadow-emerald-500/20 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <MessageCircle className="w-5 h-5 shrink-0" />
-              <span>Confirmar Agendamento pelo WhatsApp</span>
-            </a>
-
-            <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center max-w-sm mx-auto">
-              <button
-                onClick={() => navigate('/')}
-                className="w-full bg-[#0A2B2A] hover:bg-[#134241] text-[#FAF8F5] px-6 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm"
-              >
-                Voltar para Home
-              </button>
+            <h2 className="text-2xl font-serif font-bold text-[#0A2B2A]">Agendamento Concluído!</h2>
+            
+            <div className="bg-[#FAF8F5]/70 border border-[#C5A880]/30 rounded-2xl p-5 mt-6 text-left text-xs space-y-2">
+              <p className="border-b pb-1 font-bold text-slate-700 uppercase">Resumo</p>
+              <p><strong>Paciente:</strong> {agendamentoSucesso.nome_paciente}</p>
+              <p><strong>Serviço:</strong> {serviceType === 'CONSULTA_MEDICA' ? 'Consulta Médica' : serviceType === 'EXAME_LABORATORIAL' ? 'Exame Laboratorial / Check-up' : 'Exame de Imagem'}</p>
               
-              <button
-                onClick={() => {
-                  setNomePaciente('');
-                  setTelefone('');
-                  setHorarioSelecionado(null);
-                  setMedicoSelecionado(null);
-                  setStep(1);
-                }}
-                className="w-full bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-6 py-2.5 rounded-xl text-xs font-bold transition-all"
-              >
-                Agendar outro horário
-              </button>
+              {serviceType === 'CONSULTA_MEDICA' && (
+                <>
+                  <p><strong>Médico:</strong> {agendamentoSucesso.horario?.medico?.nome}</p>
+                  <p><strong>Data & Hora:</strong> {formatarData(agendamentoSucesso.horario?.data_hora)} às {formatarHora(agendamentoSucesso.horario?.data_hora)} hs</p>
+                </>
+              )}
+              
+              {serviceType !== 'CONSULTA_MEDICA' && (
+                <>
+                  <p><strong>Exame Escolhido:</strong> {exameSelecionado?.nome}</p>
+                  <p><strong>Data Preferencial:</strong> {formatarData(agendamentoSucesso.data_preferencial)}</p>
+                </>
+              )}
             </div>
+
+            {(agendamentoSucesso.checkup?.instrucoes_preparo || agendamentoSucesso.exame_imagem?.instrucoes_preparo || exameSelecionado?.instrucoes_preparo) && (
+              <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 mt-4 text-left text-xs space-y-2">
+                <p className="font-bold text-blue-800 uppercase flex items-center space-x-1"><AlertCircle className="w-4 h-4"/> <span>Instruções de Preparo</span></p>
+                <p className="text-blue-900 leading-relaxed">
+                  {agendamentoSucesso.checkup?.instrucoes_preparo || agendamentoSucesso.exame_imagem?.instrucoes_preparo || exameSelecionado?.instrucoes_preparo}
+                </p>
+              </div>
+            )}
+
+            <a
+              href={getWhatsAppLink('5588996248427', `Olá! Gostaria de confirmar meu agendamento de ${serviceType === 'CONSULTA_MEDICA' ? 'Consulta' : 'Exame'}. Nome: ${agendamentoSucesso.nome_paciente}`)}
+              target="_blank" rel="noopener noreferrer"
+              className="mt-6 w-full bg-emerald-500 text-white py-3 px-6 rounded-xl font-bold text-xs flex justify-center items-center space-x-2"
+            >
+              <MessageCircle className="w-5 h-5" /> <span>Confirmar pelo WhatsApp</span>
+            </a>
+            
+            <button onClick={() => navigate('/')} className="mt-3 w-full bg-[#0A2B2A] text-[#FAF8F5] py-3 rounded-xl font-bold text-xs">
+              Voltar para Home
+            </button>
           </div>
         )}
-
       </div>
     </div>
   );

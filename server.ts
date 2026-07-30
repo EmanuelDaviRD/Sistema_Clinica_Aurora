@@ -9,8 +9,10 @@ import { getPrisma } from "./src/db/prisma";
 import authRouter from "./src/routes/auth";
 import medicosRouter from "./src/routes/medicos";
 import horariosRouter from "./src/routes/horarios";
-import agendamentosRouter from "./src/routes/agendamentos";
-import pacientesRouter from "./src/routes/pacientes";
+import agendamentosRouter from "./src/routes/agendamentos.js";
+import pacientesRouter from "./src/routes/pacientes.js";
+import examesRouter from "./src/routes/exames.js";
+import checkupsRouter from "./src/routes/checkups.js";
 
 async function startServer() {
   const app = express();
@@ -84,6 +86,8 @@ async function startServer() {
   app.use("/api/horarios", horariosRouter);
   app.use("/api/agendamentos", agendamentosRouter);
   app.use("/api/pacientes", pacientesRouter);
+  app.use("/api/exames", examesRouter);
+  app.use("/api/checkups", checkupsRouter);
 
   // Integração com o ecossistema de compilação Vite
   if (process.env.NODE_ENV !== "production") {
